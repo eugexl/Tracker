@@ -5,4 +5,13 @@
 //  Created by Eugene Dmitrichenko on 20.12.2023.
 //
 
-import Foundation
+import UIKit
+
+struct Tracker: Codable {
+    
+    let id: UUID
+    let name: String
+    let color: String
+    let emoji: String
+    let schedule: Set<TrackerSchedule>
+}

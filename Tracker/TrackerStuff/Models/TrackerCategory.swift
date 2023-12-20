@@ -6,3 +6,10 @@
 //
 
 import Foundation
+
+/// Разбиение трекеров по категориям
+struct TrackerCategory: Codable {
+    
+    let title: String
+    var trackers: [Tracker]
+}

@@ -6,3 +6,10 @@
 //
 
 import Foundation
+
+/// Сущность для сохранения прогресса трекеров в определенную дату
+struct TrackerRecord: Codable {
+    
+    let id: UUID
+    let time: Date
+}

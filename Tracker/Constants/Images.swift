@@ -6,3 +6,10 @@
 //
 
 import Foundation
+
+struct ImageNames {
+    static let trackerTBI = "TrackerTBI"
+    static let statisticsTBI = "StatisticsTBI"
+    static let quantityChecked = "QuantityChecked"
+    static let quantityPlus = "QuantityPlus"
+}
