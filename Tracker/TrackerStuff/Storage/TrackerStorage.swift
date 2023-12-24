@@ -9,10 +9,9 @@ import Foundation
 
 protocol TrackerStorageProtocol {
     
-    func add(category: TrackerCategory)
     func add(tracker: Tracker, to categoryTitle: String)
     func completeTracker(with tracker: TrackerRecord, indeed: Bool) -> [TrackerRecord]
-    func getCategories(by day: Int?) -> [TrackerCategory]
+    func getCategories(by day: Int?, and searchFilter: String?) -> [TrackerCategory]
     func getCompletedTrackers() -> [TrackerRecord]
     func save(categories: [TrackerCategory])
 }
@@ -28,10 +27,6 @@ final class TrackerStorageTemp: TrackerStorageProtocol {
     
     private init() {}
     
-    func add(category: TrackerCategory){
-        
-    }
-    
     func add(tracker: Tracker, to categoryTitle: String){
         
         let categories = getCategories(by: nil)
@@ -39,13 +34,15 @@ final class TrackerStorageTemp: TrackerStorageProtocol {
         var additionDone = false
         
         categories.forEach {
-           var newCategory = $0
-            if newCategory.title == categoryTitle {
-                newCategory.trackers.append(tracker)
+            var trackers = $0.trackers
+            if $0.title == categoryTitle {
+                trackers.append(tracker)
                 additionDone = true
             }
+            let newCategory: TrackerCategory = TrackerCategory(title: $0.title, trackers: trackers)
             newCategoriesArray.append(newCategory)
         }
+        
         if !additionDone {
             let newCategory = TrackerCategory(title: categoryTitle, trackers: [tracker])
             
@@ -77,27 +74,32 @@ final class TrackerStorageTemp: TrackerStorageProtocol {
         
     }
     
-    func getCategories(by day: Int?) -> [TrackerCategory] {
+    func getCategories(by day: Int?, and searchFilter: String? = nil) -> [TrackerCategory] {
         
         guard let AllCategoriesJSONData = userDefaults.object(forKey: categoriesKey) as? Data else {
             
             return [TrackerCategory]()
         }
         
+        
         do {
             let AllCategories = try JSONDecoder().decode([TrackerCategory].self, from: AllCategoriesJSONData)
-        
             
             if let day = day {
                 
                 var byDayCategories = [TrackerCategory]()
                 
                 AllCategories.forEach { category in
+                    
                     guard let scheduleDay = TrackerSchedule(rawValue: day) else {
                         return
                     }
+                    
+                    let searchFilterUnwrapped: String = searchFilter ?? ""
+                    
                     let trackers = category.trackers.filter {
-                        $0.schedule.contains(scheduleDay)
+                        
+                        ($0.schedule.isEmpty || $0.schedule.contains(scheduleDay)) && (searchFilterUnwrapped.count > 0 && $0.name.contains(searchFilterUnwrapped) ||  searchFilterUnwrapped.count == 0)
                     }
                     if trackers.count > 0 {
                         byDayCategories.append(TrackerCategory(title: category.title, trackers: trackers))
@@ -112,7 +114,7 @@ final class TrackerStorageTemp: TrackerStorageProtocol {
             }
             
         } catch {
-            print("TrackerStorage: Couldn't decode Categories from JSON!")
+            // TODO: В следующей весрии приложения отработать ошибку кодировки
         }
         
         return [TrackerCategory]()
@@ -131,8 +133,7 @@ final class TrackerStorageTemp: TrackerStorageProtocol {
             
         } catch {
             
-            print("TrackerStorage: Couldn't decode CompletedTrackers from JSON!")
-           return [TrackerRecord]()
+            return [TrackerRecord]()
         }
     }
     
@@ -142,7 +143,7 @@ final class TrackerStorageTemp: TrackerStorageProtocol {
             let json = try JSONEncoder().encode(categories)
             userDefaults.set(json, forKey: categoriesKey)
         } catch {
-            print("TrackerStorage: Couldn't encode Categories to JSON!")
+            // TODO: В следующей весрии приложения отработать ошибку кодировки
         }
     }
     
@@ -152,7 +153,7 @@ final class TrackerStorageTemp: TrackerStorageProtocol {
             let json = try JSONEncoder().encode(completedTrackers)
             userDefaults.set(json, forKey: completedTrackersKey)
         } catch {
-            print("TrackerStorage: Couldn't encode CompletedTrackers to JSON!")
+            // TODO: В следующей весрии приложения отработать ошибку кодировки
         }
     }
 }

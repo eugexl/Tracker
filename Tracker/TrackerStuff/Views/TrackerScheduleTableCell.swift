@@ -7,7 +7,7 @@
 
 import UIKit
 
-class TrackerScheduleTableCell: UITableViewCell {
+final class TrackerScheduleTableCell: UITableViewCell {
     
     var labelText: String? {
         didSet {
@@ -17,7 +17,7 @@ class TrackerScheduleTableCell: UITableViewCell {
     
     var delegate: TrackerScheduleViewController?
     var cellId: Int?
-
+    
     private let labelCell = {
         let label = UILabel()
         return label
@@ -25,7 +25,7 @@ class TrackerScheduleTableCell: UITableViewCell {
     
     private let switchCell = {
         let cellSwitch = UISwitch()
-        cellSwitch.onTintColor = UIColor.blue
+        cellSwitch.onTintColor = UIColor(red: 55/255, green: 114/255, blue: 231/255, alpha: 1)
         return cellSwitch
     }()
     

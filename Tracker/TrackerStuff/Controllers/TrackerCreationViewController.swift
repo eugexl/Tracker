@@ -7,17 +7,18 @@
 
 import UIKit
 
-class TrackerCreationViewController: UIViewController {
+final class TrackerCreationViewController: UIViewController {
     
     private let newTrackerType: TrackerType
     
-    private let viewModel: TrackersViewModelProtocol
+    private let presenter: TrackersPresenterProtocol
     
     private let tableCellReuseIdentifier: String = "TableCellSubtitle"
     
     private let tableViewTrackerParameter = ["Категория", "Расписание"]
     
-    private var trackerCategory: String = "Категория для отладки"
+    // FIXME: Необходимо будет убрать наименование отладочной категории
+    private var trackerCategory: String = ""
     private var trackerSchedule: Set<TrackerSchedule> = Set<TrackerSchedule>()
     
     private let buttonCancel = {
@@ -28,12 +29,12 @@ class TrackerCreationViewController: UIViewController {
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0, weight: .medium)
         button.setTitle("Отменить", for: .normal)
         button.setTitleColor(UIColor(named: ColorNames.red), for: .normal)
-    
+        
         return button
     }()
-
+    
     private let buttonCreate = {
-       let button = UIButton()
+        let button = UIButton()
         button.backgroundColor = UIColor(named: ColorNames.gray)
         button.layer.cornerRadius = 16.0
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0, weight: .medium)
@@ -41,7 +42,7 @@ class TrackerCreationViewController: UIViewController {
         button.setTitleColor(UIColor(named: ColorNames.white), for: .normal)
         return button
     }()
-
+    
     private let titleLabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -70,17 +71,20 @@ class TrackerCreationViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         setUpUI()
         
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: tableCellReuseIdentifier)
+        textField.delegate = self
+        
+        trackerCategory = newTrackerType == .habit ? "Категория для отладки привычек" : "Категория для отладки событий"
     }
     
-    init(viewModel: TrackersViewModelProtocol, type: TrackerType){
+    init(presenter: TrackersPresenterProtocol, type: TrackerType){
         
-        self.viewModel = viewModel
+        self.presenter = presenter
         self.newTrackerType = type
         
         super.init(nibName: nil, bundle: nil)
@@ -129,11 +133,12 @@ class TrackerCreationViewController: UIViewController {
         
         buttonCancel.addTarget(self, action: #selector(buttonCancelTapped), for: .touchUpInside)
         buttonCreate.addTarget(self, action: #selector(buttonCreateTapped), for: .touchUpInside)
+        
     }
     
     @objc
     func buttonCancelTapped(){
-    
+        
         dismiss(animated: true)
     }
     
@@ -146,7 +151,7 @@ class TrackerCreationViewController: UIViewController {
             return
         }
         
-        guard trackerSchedule.count > 0 else {
+        if newTrackerType == .habit, trackerSchedule.count == 0 {
             let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
             AlertPresenter.shared.presentAlert(title: "Так не пойдёт!", message: "Необходимо составить расписание трекера", actions: [alertAction], target: self)
             return
@@ -160,44 +165,8 @@ class TrackerCreationViewController: UIViewController {
                               color: randomColorName,
                               emoji: randomEmoji,
                               schedule: trackerSchedule)
-        viewModel.save(tracker: tracker, to: trackerCategory)
+        presenter.save(tracker: tracker, to: trackerCategory)
         dismiss(animated: true)
-    }
-    
-    func generateScheduleList() -> String {
-        
-        var scheduleList: String = ""
-        var delimiter: String = ""
-        
-        if trackerSchedule.contains(.monday) {
-            scheduleList += "Пн"
-            delimiter = ", "
-        }
-        if trackerSchedule.contains(.tuesday) {
-            scheduleList += delimiter + "Вт"
-            delimiter = ", "
-        }
-        if trackerSchedule.contains(.wednesday) {
-            scheduleList += delimiter + "Ср"
-            delimiter = ", "
-        }
-        if trackerSchedule.contains(.thursday) {
-            scheduleList += delimiter + "Чт"
-            delimiter = ", "
-        }
-        if trackerSchedule.contains(.friday) {
-            scheduleList += delimiter + "Пт"
-            delimiter = ", "
-        }
-        if trackerSchedule.contains(.saturday) {
-            scheduleList += delimiter + "Сб"
-            delimiter = ", "
-        }
-        if trackerSchedule.contains(.sunday) {
-            scheduleList += delimiter + "Вс"
-        }
-        
-        return scheduleList
     }
     
     func scheduleMade(with set: Set<TrackerSchedule>){
@@ -210,9 +179,10 @@ class TrackerCreationViewController: UIViewController {
 extension TrackerCreationViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-       
+        
         switch indexPath.row {
         case 0:
+            // TODO: Добавить функционал выбора/добавления категорий
             print("Category Cell Tapped")
         case 1:
             let trackerScheduleVC = TrackerScheduleViewController()
@@ -241,12 +211,11 @@ extension TrackerCreationViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
-        // Прячем последнюю разделительную линию ...
         var height: CGFloat = 76.0
         if newTrackerType == .habit {
             height = indexPath.row == 0 ? 75.0 : 76.0
         }
-    
+        
         return height
     }
     
@@ -257,14 +226,14 @@ extension TrackerCreationViewController: UITableViewDataSource {
         cell.detailTextLabel?.textColor = UIColor(named: ColorNames.gray)
         cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 15.0)
         
-        // В следующей версии приложения trckerCategory будет опциональным
-//        if (indexPath.row == 0 && trackerCategory != nil){
+        // TODO: В следующей версии переделать trackerCategory в опционал
+        // if (indexPath.row == 0 && trackerCategory != nil){
         if (indexPath.row == 0 && trackerCategory.count > 0){
             
             cell.detailTextLabel?.text = trackerCategory
         } else if (indexPath.row == 1 && !trackerSchedule.isEmpty) {
             
-            cell.detailTextLabel?.text = generateScheduleList()
+            cell.detailTextLabel?.generateScheduleList(from: trackerSchedule)
         }
         
         cell.textLabel?.text = tableViewTrackerParameter[indexPath.row]
@@ -284,3 +253,13 @@ extension TrackerCreationViewController: UITableViewDataSource {
         return cell
     }
 }
+
+extension TrackerCreationViewController: UITextFieldDelegate {
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        
+        textField.resignFirstResponder()
+        return true
+    }
+}
+

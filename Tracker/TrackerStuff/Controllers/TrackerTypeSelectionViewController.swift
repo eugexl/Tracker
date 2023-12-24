@@ -9,14 +9,14 @@ import UIKit
 
 final class TrackerTypeSelectionViewController: UIViewController {
     
-    private let viewModel: TrackersViewModelProtocol
+    private let presenter: TrackersPresenterProtocol
     
     private let buttonHabbit = {
         let button = UIButton()
         button.layer.cornerRadius = 16.0
         button.setTitle("Привычка", for: .normal)
         button.backgroundColor = UIColor(named: ColorNames.black)
-       return button
+        return button
     }()
     
     private let buttonIrregularEvents = {
@@ -24,7 +24,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
         button.layer.cornerRadius = 16.0
         button.setTitle("Нерегулярные события", for: .normal)
         button.backgroundColor = UIColor(named: ColorNames.black)
-       return button
+        return button
     }()
     
     private let titleLabel = {
@@ -33,37 +33,37 @@ final class TrackerTypeSelectionViewController: UIViewController {
         label.text = "Создание трекера"
         return label
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         setUpUI()
         
         buttonHabbit.addTarget(self, action: #selector(buttonHabbitTapped), for: .touchUpInside)
         buttonIrregularEvents.addTarget(self, action: #selector(buttonIrregularEventsTapped), for: .touchUpInside)
     }
     
-    init(viewModel: TrackersViewModelProtocol){
+    init(presenter: TrackersPresenterProtocol){
         
-        self.viewModel = viewModel
+        self.presenter = presenter
         
         super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
-            fatalError()
+        fatalError()
     }
     
     @objc
     func buttonHabbitTapped(){
         dismiss(animated: true)
-        viewModel.createTracker(type: .habit)
+        presenter.createTracker(type: .habit)
     }
     
     @objc
     func buttonIrregularEventsTapped(){
         dismiss(animated: true)
-        viewModel.createTracker(type: .irregularEvent)
+        presenter.createTracker(type: .irregularEvent)
     }
     
     func setUpUI(){
@@ -75,17 +75,19 @@ final class TrackerTypeSelectionViewController: UIViewController {
             view.addSubview($0)
         }
         
+        let buttonHabbitTopPosition = view.bounds.height / 2 - (60 + 5)
+        
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 28.0),
+            titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 28),
             titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            buttonHabbit.heightAnchor.constraint(equalToConstant: 60.0),
-            buttonHabbit.topAnchor.constraint(equalTo: view.topAnchor, constant: 395.0),
-            buttonHabbit.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20.0),
-            buttonHabbit.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20.0),
-            buttonIrregularEvents.heightAnchor.constraint(equalToConstant: 60.0),
-            buttonIrregularEvents.topAnchor.constraint(equalTo: view.topAnchor, constant: 471.0),
-            buttonIrregularEvents.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20.0),
-            buttonIrregularEvents.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20.0)
+            buttonHabbit.heightAnchor.constraint(equalToConstant: 60),
+            buttonHabbit.topAnchor.constraint(equalTo: view.topAnchor, constant: buttonHabbitTopPosition),
+            buttonHabbit.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            buttonHabbit.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            buttonIrregularEvents.heightAnchor.constraint(equalToConstant: 60),
+            buttonIrregularEvents.topAnchor.constraint(equalTo: buttonHabbit.bottomAnchor, constant: 10),
+            buttonIrregularEvents.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            buttonIrregularEvents.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
     }
 }

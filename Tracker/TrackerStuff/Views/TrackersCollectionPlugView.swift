@@ -8,7 +8,7 @@
 import UIKit
 
 final class TrackersCollectionPlugView: UIView {
-
+    
     
     private let plugImage: UIImageView = UIImageView(image: UIImage(named: "PlugImage"))
     private let label: UILabel = {
@@ -20,7 +20,7 @@ final class TrackersCollectionPlugView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         [ plugImage,
-            label
+          label
         ].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
@@ -45,7 +45,7 @@ final class TrackersCollectionPlugView: UIView {
     
     func fadeIn(){
         UIView.animate(withDuration: 0.3) {
-            self.alpha = 1
+            self.alpha = 2
         }
     }
     

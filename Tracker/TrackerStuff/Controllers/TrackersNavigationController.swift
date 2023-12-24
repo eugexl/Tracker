@@ -7,15 +7,15 @@
 
 import UIKit
 
-class TrackersNavigationController: UINavigationController {
+final class TrackersNavigationController: UINavigationController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let viewModel = TrackersViewModel()
-        let trackersVC = TrackersViewController(viewModel: viewModel)
+        let presenter = TrackersPresenter()
+        let trackersVC = TrackersViewController(presenter: presenter)
         
-        viewModel.view = trackersVC
+        presenter.view = trackersVC
         
         viewControllers.append(trackersVC)
     }

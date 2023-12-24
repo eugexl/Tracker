@@ -17,54 +17,62 @@ protocol TrackersViewControllerProtocol: AnyObject {
 
 final class TrackersViewController: UIViewController {
     
-    private let viewModel: TrackersViewModelProtocol
+    private let presenter: TrackersPresenterProtocol
     
     private let collectionView: UICollectionView = {
         
-        let cView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
+        let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         
-        cView.register(TrackerCell.self, forCellWithReuseIdentifier: TrackerCell.reuseIdentifier)
-        cView.register(TrackersSectionHeader.self,
-                                forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-                                withReuseIdentifier: TrackersSectionHeader.reuseIdentifier)
-        return cView
+        view.register(TrackerCell.self, forCellWithReuseIdentifier: TrackerCell.reuseIdentifier)
+        view.register(TrackersSectionHeader.self,
+                       forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+                       withReuseIdentifier: TrackersSectionHeader.reuseIdentifier)
+        return view
     }()
     
     var currentDate: Date = Date()
     
     private let datePicker: UIDatePicker = {
-        
         let datePicker = UIDatePicker()
-        datePicker.datePickerMode = .date
+        datePicker.translatesAutoresizingMaskIntoConstraints = false
         datePicker.preferredDatePickerStyle = .compact
-        datePicker.locale = Locale(identifier: "ru")
-        
+        datePicker.datePickerMode = .date
+        datePicker.locale = Locale(identifier: "ru_RU")
         return datePicker
     }()
     
-    private let searchBar: UISearchController = {
-        let searchBar = UISearchController()
+    
+    private let labelTitle = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 34, weight: .bold)
+        label.text = "Трекеры"
+        return label
+    }()
+    
+    private let searchTextField: UISearchTextField = {
+        let searchBar = UISearchTextField()
+        searchBar.placeholder = "Поиск"
         return searchBar
     }()
     
-    
     private var categories: [TrackerCategory] = []
-   
+    
     private var completedTrackers: [TrackerRecord] = []
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        viewModel.viewDidLoad()
+        presenter.viewDidLoad()
         
         setUpUI()
         
         collectionView.dataSource = self
         collectionView.delegate = self
+        searchTextField.delegate = self
     }
     
-    init(viewModel: TrackersViewModelProtocol) {
-        self.viewModel = viewModel
+    init(presenter: TrackersPresenterProtocol) {
+        self.presenter = presenter
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -76,14 +84,14 @@ final class TrackersViewController: UIViewController {
     @objc
     private func newTrackerButtonTapped() {
         
-        let trackerTypeSelectionVC = TrackerTypeSelectionViewController(viewModel: viewModel)
+        let trackerTypeSelectionVC = TrackerTypeSelectionViewController(presenter: presenter)
         trackerTypeSelectionVC.modalPresentationStyle = .popover
         present(trackerTypeSelectionVC, animated: true)
     }
     
     func newTrackerViewControllerPresenting(type: TrackerType){
         
-        let newTrackerVC = TrackerCreationViewController(viewModel: viewModel, type: type)
+        let newTrackerVC = TrackerCreationViewController(presenter: presenter, type: type)
         newTrackerVC.modalPresentationStyle = .popover
         present(newTrackerVC, animated: true)
     }
@@ -91,46 +99,55 @@ final class TrackersViewController: UIViewController {
     private func setUpUI () {
         
         view.backgroundColor = .white
+        navigationController?.navigationBar.tintColor = .darkGray
+        navigationController?.navigationBar.barTintColor = .white
+        navigationController?.navigationBar.shadowImage = UIImage()
+        
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(newTrackerButtonTapped))
         navigationItem.leftBarButtonItem?.tintColor = .black
         
-        datePicker.addTarget(self, action: #selector(dateSelected), for: .valueChanged)
-        
-        navigationItem.searchController = searchBar
-        
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: datePicker)
-        navigationItem.title = "Трекеры"
-        navigationItem.largeTitleDisplayMode = .always
-        navigationItem.hidesSearchBarWhenScrolling = false
-        navigationController?.navigationBar.prefersLargeTitles = true
         
-        
-        [collectionView].forEach {
+        [collectionView, labelTitle, searchTextField].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
-        
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            datePicker.widthAnchor.constraint(equalToConstant: 96),
+            
+            labelTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 90.0),
+            labelTitle.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16.0),
+            
+            searchTextField.heightAnchor.constraint(equalToConstant: 36.0),
+            searchTextField.topAnchor.constraint(equalTo: labelTitle.bottomAnchor, constant: 10.0),
+            searchTextField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            searchTextField.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            collectionView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 10),
             collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
-        
+        datePicker.addTarget(self, action: #selector(dateSelected), for: .valueChanged)
+        searchTextField.addTarget(self, action: #selector(searchTextEdited), for: .editingChanged)
     }
     
     @objc
-    private func dateSelected( _ datePicker: UIDatePicker){
+    private func searchTextEdited(){
+        
+        presenter.updateCollection(withRecords: true, and: searchTextField.text)
+    }
+    
+    @objc
+    private func dateSelected(){
         
         currentDate = datePicker.date
-        
-        viewModel.updateCollection(withRecords: false)
+        presenter.updateCollection(withRecords: false, and: searchTextField.text)
     }
 }
 
 extension TrackersViewController: UICollectionViewDelegate {
-    
+    // TODO: Необходимо доделать пункты контекстного меню
 }
 
 extension TrackersViewController: UICollectionViewDataSource {
@@ -168,13 +185,13 @@ extension TrackersViewController: UICollectionViewDataSource {
             return UICollectionViewCell()
         }
         
-        cell.viewModel = viewModel
+        cell.presenter = presenter
         
         let tracker: Tracker = categories[indexPath.section].trackers[indexPath.row]
         
         var completeDays: Int = 0
         var complete: Bool = false
-    
+        
         completedTrackers.forEach {
             
             if $0.id == tracker.id {
@@ -253,6 +270,16 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
     }
 }
 
+extension TrackersViewController: UITextFieldDelegate {
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        
+        textField.resignFirstResponder()
+        return true
+    }
+}
+
+
 extension TrackersViewController: TrackersViewControllerProtocol {
     
     func updateTrackersData(with trackerCategories: [TrackerCategory]?, and trackerRecords: [TrackerRecord]?){
@@ -274,3 +301,4 @@ extension TrackersViewController: TrackersViewControllerProtocol {
         self.present(alert, animated: true)
     }
 }
+

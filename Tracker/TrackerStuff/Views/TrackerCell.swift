@@ -19,11 +19,11 @@ final class TrackerCell: UICollectionViewCell {
     
     var completed: Bool = false {
         didSet {
-          updateCompleteTrackerButton()
+            updateCompleteTrackerButton()
         }
     }
     
-    var viewModel: TrackersViewModelProtocol?
+    var presenter: TrackersPresenterProtocol?
     var trackerId: UUID?
     
     private let buttonCompleteTracker: UIButton = {
@@ -54,7 +54,7 @@ final class TrackerCell: UICollectionViewCell {
         text.textColor = .white
         text.backgroundColor = .none
         text.textAlignment = .left
-        
+        text.isEditable = false
         return text
     }()
     
@@ -93,10 +93,10 @@ final class TrackerCell: UICollectionViewCell {
     private func buttonCompleteTrackerTapped(){
         
         
-        guard let viewModel = viewModel, let trackerId = trackerId else {
+        guard let presenter = presenter, let trackerId = trackerId else {
             return
         }
-        viewModel.completeTracker(with: trackerId, indeed: !completed)
+        presenter.completeTracker(with: trackerId, indeed: !completed)
     }
     
     private func setUpUI(){

@@ -7,8 +7,8 @@
 
 import UIKit
 
-class TrackerScheduleViewController: UIViewController {
-
+final class TrackerScheduleViewController: UIViewController {
+    
     var schedule: Set<TrackerSchedule> = Set<TrackerSchedule>()
     
     private let cellTitle: [String] =
@@ -45,7 +45,7 @@ class TrackerScheduleViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         tableView.dataSource = self
         tableView.delegate = self
         

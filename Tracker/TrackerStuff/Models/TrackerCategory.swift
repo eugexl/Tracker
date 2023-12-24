@@ -11,5 +11,5 @@ import Foundation
 struct TrackerCategory: Codable {
     
     let title: String
-    var trackers: [Tracker]
+    let trackers: [Tracker]
 }

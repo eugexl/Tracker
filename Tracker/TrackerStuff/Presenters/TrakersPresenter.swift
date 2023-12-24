@@ -9,33 +9,26 @@
 // import Foundation
 import UIKit
 
-protocol TrackersViewModelProtocol {
+protocol TrackersPresenterProtocol {
     
     var view: TrackersViewControllerProtocol? { get set }
     func viewDidLoad()
     func completeTracker(with id: UUID, indeed: Bool)
     func createTracker(type: TrackerType)
     func save(tracker: Tracker, to category: String)
-    func updateCollection(withRecords: Bool)
+    func updateCollection(withRecords: Bool, and searchFilter: String?)
 }
 
-class TrackersViewModel: TrackersViewModelProtocol {
+final class TrackersPresenter: TrackersPresenterProtocol {
     
     weak var view: TrackersViewControllerProtocol?
     
     private let trackerStorage: TrackerStorageProtocol = TrackerStorageTemp.shared
     
     func viewDidLoad(){
-       
-        // Добавляем тестовые данные для наглядности
-        if UserDefaults.standard.object(forKey: "TrackerCategories") == nil {
-            
-            trackerStorage.save(categories: mockCategories)
-        }
         
         updateCollection(withRecords: true)
     }
-    
     
     func completeTracker(with trackerId: UUID, indeed: Bool){
         
@@ -66,30 +59,15 @@ class TrackersViewModel: TrackersViewModelProtocol {
         updateCollection()
     }
     
-    func updateCollection(withRecords: Bool = false){
+    func updateCollection(withRecords: Bool = false, and searchFilter: String? = nil){
         
         guard let view = view, let day = Calendar.current.dateComponents([.weekday], from: view.currentDate).weekday else {
             return // ToDo Warning
         }
         
-        let categories = trackerStorage.getCategories(by: day)
+        let categories = trackerStorage.getCategories(by: day, and: searchFilter)
         let records = withRecords ? trackerStorage.getCompletedTrackers() : nil
         
         view.updateTrackersData(with: categories, and: records)
     }
-    
-    // MARK: Тестовые данные
-    var mockCategories: [TrackerCategory] = [
-        TrackerCategory(title: "Category One", trackers: [
-            Tracker(id: UUID(), name: "Tracker One in Category One", color: ColorNames.colorSlection1 , emoji: "😝", schedule: [.sunday, .monday]),
-            Tracker(id: UUID(), name: "Tracker Two in Category One", color: ColorNames.colorSlection2, emoji: "😐", schedule: [.sunday, .tuesday]),
-            Tracker(id: UUID(), name: "Tracker Three in Category One", color: ColorNames.colorSlection3, emoji: "🫢", schedule: [.tuesday, .thursday])
-        ]),
-        TrackerCategory(title: "Category Two", trackers: [
-            Tracker(id: UUID(), name: "Tracker One in Category Two", color: ColorNames.colorSlection4, emoji: "😒", schedule: [.wednesday]),
-            Tracker(id: UUID(), name: "Tracker Two in Category Two", color: ColorNames.colorSlection5, emoji: "😷", schedule: [.wednesday, .thursday]),
-            Tracker(id: UUID(), name: "Tracker Three in Category Two", color: ColorNames.colorSlection6, emoji: "😴", schedule: [.monday, .tuesday, .wednesday, .thursday]),
-            Tracker(id: UUID(), name: "Tracker Three in Category Two", color: ColorNames.colorSlection7, emoji: "🤫", schedule: [.sunday,.monday,.tuesday,.wednesday,.thursday,.saturday])
-        ])
-    ]
 }
