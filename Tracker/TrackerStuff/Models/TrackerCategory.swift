@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// Разбиение трекеров по категориям
-struct TrackerCategory: Codable {
+struct TrackerCategory {
     
     let title: String
     let trackers: [Tracker]

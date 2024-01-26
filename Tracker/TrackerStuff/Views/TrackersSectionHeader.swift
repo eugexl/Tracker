@@ -17,7 +17,6 @@ final class TrackersSectionHeader: UICollectionReusableView {
         return label
     }()
     
-    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -25,8 +24,8 @@ final class TrackersSectionHeader: UICollectionReusableView {
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 16.0),
-            headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 28.0),
+            headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 16),
+            headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 28),
             headerLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
     }

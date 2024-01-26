@@ -12,8 +12,10 @@ final class TrackersNavigationController: UINavigationController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let presenter = TrackersPresenter()
-        let trackersVC = TrackersViewController(presenter: presenter)
+        let dataProvider = DataProvider()
+        let presenter = TrackersPresenter(provider: dataProvider)
+        
+        let trackersVC = TrackersViewController(presenter: presenter, provider: dataProvider)
         
         presenter.view = trackersVC
         

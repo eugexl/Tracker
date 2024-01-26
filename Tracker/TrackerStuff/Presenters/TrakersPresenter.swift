@@ -6,8 +6,8 @@
 //
 
 // MARK: Временно используем UIKit для применения мокковых данных
-// import Foundation
-import UIKit
+import Foundation
+//import UIKit
 
 protocol TrackersPresenterProtocol {
     
@@ -15,24 +15,28 @@ protocol TrackersPresenterProtocol {
     func viewDidLoad()
     func completeTracker(with id: UUID, indeed: Bool)
     func createTracker(type: TrackerType)
-    func save(tracker: Tracker, to category: String)
-    func updateCollection(withRecords: Bool, and searchFilter: String?)
+    func save(tracker: Tracker, to categoryWithTitle: String)
+    func updateCollection(withRecords: Bool)
 }
 
 final class TrackersPresenter: TrackersPresenterProtocol {
     
     weak var view: TrackersViewControllerProtocol?
     
-    private let trackerStorage: TrackerStorageProtocol = TrackerStorageTemp.shared
+    private let dataProvider: DataProviderProtocol
     
     func viewDidLoad(){
         
-        updateCollection(withRecords: true)
+    }
+    
+    init(provider: DataProviderProtocol){
+        
+        self.dataProvider = provider
     }
     
     func completeTracker(with trackerId: UUID, indeed: Bool){
         
-        guard let view = view else {
+        guard let view = view, let date = view.currentDate.woTime else {
             return
         }
         
@@ -42,10 +46,15 @@ final class TrackersPresenter: TrackersPresenterProtocol {
             return
         }
         
-        let trackerRecord = TrackerRecord(id: trackerId, time: view.currentDate)
-        let completedTracers = trackerStorage.completeTracker(with: trackerRecord, indeed: indeed)
+        let trackerRecord = TrackerRecord(id: trackerId, time: date)
         
-        view.updateTrackersData(with: nil, and: completedTracers)
+        do {
+            if let indexPath = try dataProvider.completeTracker(with: trackerRecord, indeed: indeed) {
+                view.updateCell(at: indexPath)
+            }
+        } catch {
+            view.warnSaveRecordFailure()
+        }
     }
     
     func createTracker(type: TrackerType){
@@ -53,21 +62,34 @@ final class TrackersPresenter: TrackersPresenterProtocol {
         view?.newTrackerViewControllerPresenting(type: type)
     }
     
-    func save(tracker: Tracker, to category: String){
+    func save(tracker: Tracker, to categoryWithTitle: String) {
         
-        trackerStorage.add(tracker: tracker, to: category)
-        updateCollection()
+        dataProvider.save(tracker: tracker, to: categoryWithTitle){ result in
+            switch result {
+            case .success( _ ):
+                guard let view = self.view else {
+                    return
+                }
+                self.dataProvider.updateCollectionData(with: view.currentDate, and: view.searchTrackerName) {
+                    view.updateTrackersData()
+                }
+            case .failure( _ ):
+                
+                DispatchQueue.main.async {
+                    self.view?.warnSaveTrackerFailure()
+                }
+            }
+        }
     }
-    
-    func updateCollection(withRecords: Bool = false, and searchFilter: String? = nil){
-        
-        guard let view = view, let day = Calendar.current.dateComponents([.weekday], from: view.currentDate).weekday else {
-            return // ToDo Warning
+
+    func updateCollection(withRecords: Bool = false) {
+        guard let view = view else {
+            return
         }
         
-        let categories = trackerStorage.getCategories(by: day, and: searchFilter)
-        let records = withRecords ? trackerStorage.getCompletedTrackers() : nil
-        
-        view.updateTrackersData(with: categories, and: records)
+        dataProvider.updateCollectionData(with: view.currentDate, and: view.searchTrackerName) {
+            
+            view.updateTrackersData()
+        }
     }
 }

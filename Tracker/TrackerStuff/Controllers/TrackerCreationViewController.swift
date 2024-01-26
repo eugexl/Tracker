@@ -9,6 +9,22 @@ import UIKit
 
 final class TrackerCreationViewController: UIViewController {
     
+    private let colorList: [String] = [
+        "Color selection 1", "Color selection 2", "Color selection 3", "Color selection 4", "Color selection 5", "Color selection 6",
+        "Color selection 7", "Color selection 8", "Color selection 9", "Color selection 10", "Color selection 11", "Color selection 12",
+        "Color selection 13", "Color selection 14", "Color selection 15", "Color selection 16", "Color selection 17", "Color selection 18"
+    ]
+    
+    private var colorSelected: Int? = nil
+    
+    private let emojiList: [String] = [
+        "🙂", "😻", "🌺", "🐶", "❤️", "😱",
+        "😇", "😡", "🥶", "🤔", "🙌", "🍔",
+        "🥦", "🏓", "🥇", "🎸", "🏝", "😪"
+    ]
+    
+    private var emojiSelected: Int? = nil
+    
     private let newTrackerType: TrackerType
     
     private let presenter: TrackersPresenterProtocol
@@ -21,7 +37,7 @@ final class TrackerCreationViewController: UIViewController {
     private var trackerCategory: String = ""
     private var trackerSchedule: Set<TrackerSchedule> = Set<TrackerSchedule>()
     
-    private let buttonCancel = {
+    private let buttonCancel: UIButton = {
         var button = UIButton()
         button.layer.borderWidth = 1.0
         button.layer.borderColor = UIColor(named: ColorNames.red)?.cgColor
@@ -33,7 +49,7 @@ final class TrackerCreationViewController: UIViewController {
         return button
     }()
     
-    private let buttonCreate = {
+    private let buttonCreate: UIButton = {
         let button = UIButton()
         button.backgroundColor = UIColor(named: ColorNames.gray)
         button.layer.cornerRadius = 16.0
@@ -43,7 +59,34 @@ final class TrackerCreationViewController: UIViewController {
         return button
     }()
     
-    private let titleLabel = {
+    private let collectionView: UICollectionView = {
+        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
+        let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
+        view.bounces = false
+        view.register(TrackerCreationEmojiCell.self, forCellWithReuseIdentifier: TrackerCreationEmojiCell.reuseIdentifier)
+        view.register(TrackerCreationColorCell.self, forCellWithReuseIdentifier: TrackerCreationColorCell.reuseIdentifier)
+        view.register(TrackersSectionHeader.self,
+                      forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+                      withReuseIdentifier: TrackersSectionHeader.reuseIdentifier)
+        return view
+    }()
+    
+    private let contentView: UIView = {
+        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let scrollView: UIScrollView = {
+        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
+        let view = UIScrollView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let titleLabel: UILabel = {
+        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         return label
@@ -78,6 +121,8 @@ final class TrackerCreationViewController: UIViewController {
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: tableCellReuseIdentifier)
         textField.delegate = self
+        collectionView.delegate = self
+        collectionView.dataSource = self
         
         trackerCategory = newTrackerType == .habit ? "Категория для отладки привычек" : "Категория для отладки событий"
     }
@@ -101,39 +146,69 @@ final class TrackerCreationViewController: UIViewController {
         let tableViewHeight: CGFloat = newTrackerType == .habit ? 150.0 : 75.0
         titleLabel.text = newTrackerType == .habit ? "Новая привычка" : "Новое нерегулярное событие"
         
-        [textField, titleLabel, tableView, buttonCancel, buttonCreate].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview($0)
-        }
+        view.addSubview(scrollView)
         
+        scrollView.addSubview(contentView)
+        
+        [textField, titleLabel, tableView, collectionView, buttonCancel, buttonCreate].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
         let buttonWidth = (view.bounds.width - 50) / 2
         
+        let contentViewHeightAnchor = contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+        contentViewHeightAnchor.priority = UILayoutPriority(50)
+        
+        
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 28.0),
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentViewHeightAnchor,
+            
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 28.0),
+            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            
             textField.heightAnchor.constraint(equalToConstant: 75.0),
             textField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 38.0),
-            textField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16.0),
-            textField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16.0),
+            textField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
+            textField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
+            
             tableView.heightAnchor.constraint(equalToConstant: tableViewHeight),
             tableView.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 38.0),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16.0),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16.0),
-            buttonCancel.heightAnchor.constraint(equalToConstant: 60.0),
+            tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
+            tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
+            
+            
+            collectionView.widthAnchor.constraint(equalTo: contentView.widthAnchor),
+            collectionView.heightAnchor.constraint(equalToConstant: 488),
+            collectionView.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
+            collectionView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            
+            buttonCancel.heightAnchor.constraint(equalToConstant: 60),
             buttonCancel.widthAnchor.constraint(equalToConstant: buttonWidth),
-            buttonCancel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20.0),
-            buttonCancel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -40.0),
-            buttonCreate.heightAnchor.constraint(equalToConstant: 60.0),
+            buttonCancel.topAnchor.constraint(equalTo: collectionView.bottomAnchor, constant: 20),
+            buttonCancel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            buttonCancel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
+            
+            buttonCreate.heightAnchor.constraint(equalToConstant: 60),
             buttonCreate.widthAnchor.constraint(equalToConstant: buttonWidth),
-            buttonCreate.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20.0),
-            buttonCreate.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -40.0)
+            buttonCreate.topAnchor.constraint(equalTo: collectionView.bottomAnchor, constant: 20),
+            buttonCreate.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            buttonCreate.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
         
         tableView.separatorInset = UIEdgeInsets(top: 0, left: 16.0, bottom: 0, right: 16.0)
         
         buttonCancel.addTarget(self, action: #selector(buttonCancelTapped), for: .touchUpInside)
         buttonCreate.addTarget(self, action: #selector(buttonCreateTapped), for: .touchUpInside)
-        
     }
     
     @objc
@@ -157,14 +232,27 @@ final class TrackerCreationViewController: UIViewController {
             return
         }
         
-        let randomEmoji: String = Emoji.list[Int.random(in: 0..<Emoji.list.count)]
-        let randomColorName: String = "Color selection " + Int.random(in: 1...18).description
+        guard let selectedEmojiIndex = emojiSelected else {
+            let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
+            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!", message: "Необходимо выбрать emoji трекера", actions: [alertAction], target: self)
+            return
+        }
+        
+        guard let selectedColorIndex = colorSelected else {
+            let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
+            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!", message: "Необходимо выбрать цвет трекера", actions: [alertAction], target: self)
+            return
+        }
+        
+        let emoji = emojiList[selectedEmojiIndex]
+        let colorName = colorList[selectedColorIndex]
         
         let tracker = Tracker(id: UUID(),
                               name: trackerName,
-                              color: randomColorName,
-                              emoji: randomEmoji,
+                              color: colorName,
+                              emoji: emoji,
                               schedule: trackerSchedule)
+        
         presenter.save(tracker: tracker, to: trackerCategory)
         dismiss(animated: true)
     }
@@ -263,3 +351,100 @@ extension TrackerCreationViewController: UITextFieldDelegate {
     }
 }
 
+extension TrackerCreationViewController: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        switch indexPath.section {
+        case 0:
+            if emojiSelected != indexPath.row {
+                if let selectedItem = emojiSelected {
+                    (collectionView.cellForItem(at: IndexPath(row: selectedItem, section: 0)) as? TrackerCreationEmojiCell)?.toggleSelection()
+                }
+                (collectionView.cellForItem(at: indexPath) as? TrackerCreationEmojiCell)?.toggleSelection()
+                emojiSelected = indexPath.row
+            }
+        default:
+            if colorSelected != indexPath.row {
+                if let selectedItem = colorSelected {
+                    (collectionView.cellForItem(at: IndexPath(row: selectedItem, section: 1)) as? TrackerCreationColorCell)?.toggleSelection()
+                }
+                (collectionView.cellForItem(at: indexPath) as? TrackerCreationColorCell)?.toggleSelection()
+                colorSelected = indexPath.row
+            }
+        }
+    }
+}
+
+extension TrackerCreationViewController: UICollectionViewDataSource {
+    
+    
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        2
+    }
+    
+    func collectionView(_ collectionView: UICollectionView,
+                        viewForSupplementaryElementOfKind kind: String,
+                        at indexPath: IndexPath) -> UICollectionReusableView {
+        
+        var reuseIdentifier: String = ""
+        if kind == UICollectionView.elementKindSectionHeader {
+            reuseIdentifier = TrackersSectionHeader.reuseIdentifier
+        }
+        
+        let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind,
+                                                                         withReuseIdentifier: reuseIdentifier,
+                                                                         for: indexPath) as! TrackersSectionHeader
+        let headerText = indexPath.section == 0 ? "Emoji" : "Цвет"
+        headerView.setHeader(with: headerText)
+        
+        return headerView
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        18
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        
+        switch indexPath.section {
+        case 0:
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCreationEmojiCell.reuseIdentifier,for: indexPath) as? TrackerCreationEmojiCell
+            cell?.emoji = emojiList[indexPath.row]
+            
+            return cell ?? UICollectionViewCell()
+        default:
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCreationColorCell.reuseIdentifier,for: indexPath) as? TrackerCreationColorCell
+            cell?.color = colorList[indexPath.row]
+            return cell ?? UICollectionViewCell()
+        }
+    }
+}
+extension TrackerCreationViewController: UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
+        return CGSize(width: 52, height: 52)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        
+        CGSize(width: 200, height: 40)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        
+        let sideInset = CGFloat((contentView.frame.size.width - 332) / 2)
+        let inset = UIEdgeInsets(top: 20.0, left: sideInset, bottom: 20.0, right: sideInset)
+        
+        return inset
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        4
+    }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        4
+    }
+    
+}
