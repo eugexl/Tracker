@@ -8,14 +8,13 @@
 import UIKit
 import CoreData
 
-final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
+final class TrackerCategoryStore: NSObject  {
     
-    private let dataProvider: DataProvider
-    private let trackerStore: TrackerStore
+    private weak var dataProvider: DataProvider?
+    private weak var trackerStore: TrackerStore?
     private let viewContext: NSManagedObjectContext
     
     lazy var resultsController: NSFetchedResultsController<TrackerCategoryCoreData> = {
-        
         let fetchRequest = NSFetchRequest<TrackerCategoryCoreData>(entityName: CoreDataNames.trackerCategoryEntityName)
         
         fetchRequest.sortDescriptors = [
@@ -32,8 +31,10 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
     }()
     
     convenience init(dataProvider: DataProvider, trackerStore: TrackerStore) {
-        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-        self.init(viewContext: context, provider: dataProvider, trackerStore: trackerStore)
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
+            fatalError("Возникла ошибка при инициализации AppDelegate")
+        }
+        self.init(viewContext: appDelegate.persistentContainer.viewContext, provider: dataProvider, trackerStore: trackerStore)
     }
     
     init(viewContext: NSManagedObjectContext, provider: DataProvider, trackerStore: TrackerStore) {
@@ -42,8 +43,7 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
         self.trackerStore = trackerStore
     }
     
-    func caregory(with title: String) -> TrackerCategoryCoreData {
-        
+    func category(with title: String) -> TrackerCategoryCoreData {
         if let categoryItem = resultsController.fetchedObjects?.filter( { $0.title == title }).first {
             return categoryItem
         } else {
@@ -55,7 +55,6 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
     }
     
     func getTrackerCategories() -> [TrackerCategory]? {
-        
         guard let coreDataCategories = resultsController.fetchedObjects else {
             return nil
         }
@@ -67,30 +66,30 @@ final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
                 categories.append(trackerCategory)
             }
         }
-        
         return categories
     }
     
-    func saveContext(){
+    private func saveContext(){
         if viewContext.hasChanges {
             try? viewContext.save()
         }
     }
     
     private func transformTrackerCategoryCoreData(from trackerCategoryEntity: TrackerCategoryCoreData) -> TrackerCategory? {
-        
         guard let title = trackerCategoryEntity.title, let trackersSet = trackerCategoryEntity.trackers as? Set<TrackerCoreData> else {
             return nil
         }
-        
         var trackers = [Tracker]()
         trackersSet.forEach { trackerEntity in
-            if let tracker = trackerStore.transformTrackerCoreData(from: trackerEntity) {
+            if let tracker = trackerStore?.transformTrackerCoreData(from: trackerEntity) {
                 trackers.append(tracker)
             }
         }
-        
         trackers.sort { $0.name < $1.name }
         return TrackerCategory(title: title, trackers: trackers)
     }
+}
+
+extension TrackerCategoryStore: NSFetchedResultsControllerDelegate {
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) { }
 }

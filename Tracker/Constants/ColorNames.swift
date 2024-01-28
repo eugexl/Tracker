@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ColorNames {
+enum ColorNames {
     static let background = "Tracker Background"
     static let black = "Tracker Black"
     static let blue = "Tracker LaunchScreenColor"

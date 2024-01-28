@@ -13,6 +13,7 @@ final class TrackersCollectionPlugView: UIView {
     private let plugImage: UIImageView = UIImageView(image: UIImage(named: "PlugImage"))
     private let label: UILabel = {
         let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 10, weight: .medium)
         label.text = "Что будем отслеживать?"
         return label
     }()

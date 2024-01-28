@@ -44,9 +44,6 @@ final class TrackerCreationColorCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setSelectionView(for section: Int){
-    }
-    
     private func setUpUI(){
         
         [selectionView, colorView].forEach {

@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct TrackerColorNames {
-    static var list: [String] = [
+enum TrackerColorNames {
+    static let list: [String] = [
         "Color selection 1",
         "Color selection 2",
         "Color selection 3",

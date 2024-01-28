@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct CoreDataNames {
+enum CoreDataNames {
     static let trackerEntityName = "TrackerCoreData"
     static let trackerCategoryEntityName = "TrackerCategoryCoreData"
     static let trackerRecordEntityName = "TrackerRecordCoreData"

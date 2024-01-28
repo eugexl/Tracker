@@ -14,6 +14,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
     private let buttonHabbit = {
         let button = UIButton()
         button.layer.cornerRadius = 16.0
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.setTitle("Привычка", for: .normal)
         button.backgroundColor = UIColor(named: ColorNames.black)
         return button
@@ -22,6 +23,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
     private let buttonIrregularEvents = {
         let button = UIButton()
         button.layer.cornerRadius = 16.0
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.setTitle("Нерегулярные события", for: .normal)
         button.backgroundColor = UIColor(named: ColorNames.black)
         return button
@@ -29,7 +31,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
     
     private let titleLabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16)
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.text = "Создание трекера"
         return label
     }()
@@ -55,18 +57,18 @@ final class TrackerTypeSelectionViewController: UIViewController {
     }
     
     @objc
-    func buttonHabbitTapped(){
+    private func buttonHabbitTapped(){
         dismiss(animated: true)
         presenter.createTracker(type: .habit)
     }
     
     @objc
-    func buttonIrregularEventsTapped(){
+    private func buttonIrregularEventsTapped(){
         dismiss(animated: true)
         presenter.createTracker(type: .irregularEvent)
     }
     
-    func setUpUI(){
+    private func setUpUI(){
         
         view.backgroundColor = .white
         

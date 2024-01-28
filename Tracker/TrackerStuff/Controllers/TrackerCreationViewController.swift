@@ -60,7 +60,6 @@ final class TrackerCreationViewController: UIViewController {
     }()
     
     private let collectionView: UICollectionView = {
-        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
         let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         view.bounces = false
         view.register(TrackerCreationEmojiCell.self, forCellWithReuseIdentifier: TrackerCreationEmojiCell.reuseIdentifier)
@@ -72,21 +71,18 @@ final class TrackerCreationViewController: UIViewController {
     }()
     
     private let contentView: UIView = {
-        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
     private let scrollView: UIScrollView = {
-        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
         let view = UIScrollView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
     private let titleLabel: UILabel = {
-        // TODO: Если не будет дополнительных изменений можно сделать инициализацию одной строкой
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         return label
@@ -212,13 +208,13 @@ final class TrackerCreationViewController: UIViewController {
     }
     
     @objc
-    func buttonCancelTapped(){
+    private func buttonCancelTapped(){
         
         dismiss(animated: true)
     }
     
     @objc
-    func buttonCreateTapped(){
+    private func buttonCreateTapped(){
         
         guard let trackerName = textField.text, trackerName.count > 0 else {
             let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
@@ -269,9 +265,9 @@ extension TrackerCreationViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         switch indexPath.row {
-        case 0:
-            // TODO: Добавить функционал выбора/добавления категорий
-            print("Category Cell Tapped")
+            
+            // TODO: Добавить функционал выбора/добавления категорий - case 0:
+            
         case 1:
             let trackerScheduleVC = TrackerScheduleViewController()
             trackerScheduleVC.delegate = self
@@ -394,7 +390,8 @@ extension TrackerCreationViewController: UICollectionViewDataSource {
         
         let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind,
                                                                          withReuseIdentifier: reuseIdentifier,
-                                                                         for: indexPath) as! TrackersSectionHeader
+                                                                            for: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
+        
         let headerText = indexPath.section == 0 ? "Emoji" : "Цвет"
         headerView.setHeader(with: headerText)
         

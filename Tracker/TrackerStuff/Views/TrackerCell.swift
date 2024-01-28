@@ -92,7 +92,6 @@ final class TrackerCell: UICollectionViewCell {
     @objc
     private func buttonCompleteTrackerTapped(){
         
-        
         guard let presenter = presenter, let trackerId = trackerId else {
             return
         }
@@ -149,16 +148,6 @@ final class TrackerCell: UICollectionViewCell {
         buttonCompleteTracker.addTarget(self, action: #selector(buttonCompleteTrackerTapped), for: .touchUpInside)
     }
     
-    func setUpTrackerInfo(with tracker: Tracker){
-        
-        trackerId = tracker.id
-        labelEmojiIcon.text = tracker.emoji
-        textViewTrackerText.text = tracker.name
-        [viewTop, buttonCompleteTracker].forEach {
-            $0.backgroundColor = UIColor(named: tracker.color)
-        }
-    }
-    
     private func updateQuantityLabel(){
         
         var daysString = ""
@@ -183,5 +172,15 @@ final class TrackerCell: UICollectionViewCell {
         let buttonCompleteTrackerImageName = completed ? "checkmark" : "plus"
         buttonCompleteTracker.setImage(UIImage(systemName: buttonCompleteTrackerImageName) , for: .normal)
         buttonCompleteTracker.layer.opacity = completed ? 0.3 : 1
+    }
+    
+    func setUpTrackerInfo(with tracker: Tracker){
+        
+        trackerId = tracker.id
+        labelEmojiIcon.text = tracker.emoji
+        textViewTrackerText.text = tracker.name
+        [viewTop, buttonCompleteTracker].forEach {
+            $0.backgroundColor = UIColor(named: tracker.color)
+        }
     }
 }

@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import Combine
 
 protocol DataProviderProtocol {
     func category(at indexPath: IndexPath) -> TrackerCategoryCoreData
@@ -25,15 +24,13 @@ final class DataProvider {
     private lazy var categoryStore: TrackerCategoryStore = TrackerCategoryStore(dataProvider: self, trackerStore: trackerStore)
     private lazy var recordStore: TrackerRecordStore = TrackerRecordStore(dataProvider: self)
     
-    var categories: [TrackerCategory] = [TrackerCategory]()
-    var completedTrackers: [TrackerRecord] = [TrackerRecord]()
+    private var categories: [TrackerCategory] = [TrackerCategory]()
+    private var completedTrackers: [TrackerRecord] = [TrackerRecord]()
     var filterDay: Int = 0
     var filterName: String = ""
     
     init(){
-        
         trackerStore.recordStore = recordStore
-        
         updateCollectionData(with: Date(), and: nil, completionHandler: nil)
         updateCompletedTrackersData()
     }
@@ -42,7 +39,6 @@ final class DataProvider {
 extension DataProvider: DataProviderProtocol {
     
     func category(at indexPath: IndexPath) -> TrackerCategoryCoreData {
-        
         return categoryStore.resultsController.object(at: indexPath)
     }
     
@@ -51,16 +47,13 @@ extension DataProvider: DataProviderProtocol {
             guard let tracker = trackerStore.getTracker(with: trackerRecord.id) else {
                 throw CDErrors.noTrackerFound
             }
-            
             if indeed {
                 try recordStore.save(record: trackerRecord, with: tracker)
             } else {
                 try recordStore.delete(record: trackerRecord)
             }
             return getIndexPathOfTracker(with: trackerRecord.id)
-            
         } catch {
-            
             throw CDErrors.cannotSaveContext
         }
     }
@@ -71,11 +64,8 @@ extension DataProvider: DataProviderProtocol {
         var complete: Bool = false
         
         completedTrackers.forEach {
-            
             if $0.id == trackerId {
-                
                 completedDays += 1
-                
                 if  Calendar.current.isDate(date, inSameDayAs: $0.time) {
                     complete = true
                 }
@@ -87,43 +77,37 @@ extension DataProvider: DataProviderProtocol {
     func getIndexPathOfTracker(with trackerId: UUID) -> IndexPath? {
         
         var row: Int = 0, section: Int = 0
-        
         for category in categories {
-            
             for tracker in category.trackers {
                 if tracker.id == trackerId {
-                    
                     return IndexPath(row: row, section: section)
                 }
                 row += 1
             }
+            row = 0
             section += 1
         }
-        
         return nil
     }
     
     func getTracker(at indexPath: IndexPath) -> Tracker {
-        
-        return self.categories[indexPath.section].trackers[indexPath.row]
+        return categories[indexPath.section].trackers[indexPath.row]
     }
     
     func numberOfSections() -> Int {
-        
         return categories.count
     }
     
     func numberOfItems(in section: Int) -> Int {
-        
         return categories[section].trackers.count
     }
     
     func save(tracker: Tracker, to categoryWithTitle: String, completionHandler: @escaping (Result<Void,Error>) -> Void) {
         
-        let categoryItem = self.categoryStore.caregory(with: categoryWithTitle)
+        let categoryItem = categoryStore.category(with: categoryWithTitle)
         
         do {
-            try self.trackerStore.save(tracker: tracker, to: categoryItem)
+            try trackerStore.save(tracker: tracker, to: categoryItem)
             completionHandler(.success(()))
         } catch {
             completionHandler(.failure(error))
@@ -131,7 +115,6 @@ extension DataProvider: DataProviderProtocol {
     }
     
     func updateCollectionData(with date: Date, and searchFilter: String?, completionHandler: (() -> Void)? ) {
-        
         guard let day = Calendar.current.dateComponents([.weekday], from: date).weekday else {
             return
         }
@@ -140,16 +123,13 @@ extension DataProvider: DataProviderProtocol {
         filterName = searchFilter ?? ""
         
         if let categories = categoryStore.getTrackerCategories() {
-            
             self.categories = categories
             completionHandler?()
         }
     }
     
     func updateCompletedTrackersData(){
-        
         if let completedTrackers = recordStore.getTrackerRecords() {
-            
             self.completedTrackers = completedTrackers
         }
     }

@@ -63,8 +63,6 @@ final class TrackersViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        presenter.viewDidLoad()
-        
         setUpUI()
         
         collectionView.dataSource = self
@@ -84,11 +82,25 @@ final class TrackersViewController: UIViewController {
     }
     
     @objc
+    private func dateSelected(){
+        
+        currentDate = datePicker.date
+        presenter.updateCollection(withRecords: false)
+    }
+    
+    @objc
     private func newTrackerButtonTapped() {
         
         let trackerTypeSelectionVC = TrackerTypeSelectionViewController(presenter: presenter)
         trackerTypeSelectionVC.modalPresentationStyle = .popover
         present(trackerTypeSelectionVC, animated: true)
+    }
+    
+    @objc
+    private func searchTextEdited(){
+        
+        searchTrackerName = searchTextField.text
+        presenter.updateCollection(withRecords: true)
     }
     
     func newTrackerViewControllerPresenting(type: TrackerType){
@@ -134,20 +146,6 @@ final class TrackersViewController: UIViewController {
         searchTextField.addTarget(self, action: #selector(searchTextEdited), for: .editingChanged)
     }
     
-    @objc
-    private func searchTextEdited(){
-        
-        searchTrackerName = searchTextField.text
-        presenter.updateCollection(withRecords: true)
-    }
-    
-    @objc
-    private func dateSelected(){
-        
-        currentDate = datePicker.date
-        presenter.updateCollection(withRecords: false)
-    }
-    
     func updateCell(at: IndexPath){
         collectionView.reloadItems(at: [at])
     }
@@ -179,11 +177,11 @@ extension TrackersViewController: UICollectionViewDataSource {
                 plugView.fadeOut()
             }
         }
+        
         return categoriesNumber
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        
         return dataProvider.numberOfItems(in: section)
     }
     
@@ -221,7 +219,7 @@ extension TrackersViewController: UICollectionViewDataSource {
         
         let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind,
                                                                          withReuseIdentifier: reuseIdentifier,
-                                                                         for: indexPath) as! TrackersSectionHeader
+                                                                         for: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
         
         let headerText = dataProvider.category(at: indexPath).title ?? ""
         headerView.setHeader(with: headerText)
@@ -259,7 +257,7 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
         
         let headerView = self.collectionView(collectionView,
                                              viewForSupplementaryElementOfKind: UICollectionView.elementKindSectionHeader,
-                                             at: indexPath) as! TrackersSectionHeader
+                                             at: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
         
         return headerView.systemLayoutSizeFitting(CGSize(width: collectionView.frame.width,
                                                          height: UIView.layoutFittingExpandedSize.height),
@@ -306,6 +304,4 @@ extension TrackersViewController: TrackersViewControllerProtocol {
                                            actions: [action],
                                            target: self)
     }
-    
 }
-

@@ -54,7 +54,7 @@ final class TrackerCreationEmojiCell: UICollectionViewCell {
             selectionView.heightAnchor.constraint(equalToConstant: 52),
             selectionView.centerXAnchor.constraint(equalTo: centerXAnchor),
             selectionView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            emojiLabel.widthAnchor.constraint(equalToConstant: 32),
+            emojiLabel.widthAnchor.constraint(equalToConstant: 38),
             emojiLabel.heightAnchor.constraint(equalToConstant: 38),
             emojiLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
             emojiLabel.centerYAnchor.constraint(equalTo: centerYAnchor)

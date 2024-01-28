@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ImageNames {
+enum ImageNames {
     static let trackerTBI = "TrackerTBI"
     static let statisticsTBI = "StatisticsTBI"
     static let quantityChecked = "QuantityChecked"

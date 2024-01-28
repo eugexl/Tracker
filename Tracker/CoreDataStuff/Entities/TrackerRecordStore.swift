@@ -10,7 +10,7 @@ import CoreData
 
 final class TrackerRecordStore: NSObject {
     
-    private let dataProvider: DataProvider
+    private weak var dataProvider: DataProvider?
     private let viewContext: NSManagedObjectContext
     
     lazy var resultsController: NSFetchedResultsController<TrackerRecordCoreData> = {
@@ -31,18 +31,18 @@ final class TrackerRecordStore: NSObject {
     }()
     
     convenience init(dataProvider: DataProvider) {
-        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-        self.init(viewContext: context, provider: dataProvider)
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
+            fatalError("Возникла ошибка при инициализации AppDelegate")
+        }
+        self.init(viewContext: appDelegate.persistentContainer.viewContext , provider: dataProvider)
     }
     
     init(viewContext: NSManagedObjectContext, provider: DataProvider) {
-        
         self.viewContext = viewContext
         self.dataProvider = provider
     }
     
     func delete(record: TrackerRecord) throws {
-        
         if let trackerRecord = getRecordCoreData(with: record.id, and: record.time) {
             
             viewContext.delete(trackerRecord)
@@ -51,7 +51,6 @@ final class TrackerRecordStore: NSObject {
     }
     
     func getTrackerRecords() -> [TrackerRecord]? {
-        
         guard let coreDataRecords = resultsController.fetchedObjects else {
             return nil
         }
@@ -59,7 +58,6 @@ final class TrackerRecordStore: NSObject {
         var trackerRecords = [TrackerRecord]()
         
         coreDataRecords.forEach { record in
-            
             if let trackerId = record.trackerId, let time = record.time {
                 trackerRecords.append( TrackerRecord(id: trackerId, time: time) )
             }
@@ -67,8 +65,7 @@ final class TrackerRecordStore: NSObject {
         return trackerRecords
     }
     
-    func getRecordCoreData(with trackerId: UUID, and date: Date) -> TrackerRecordCoreData? {
-        
+    private func getRecordCoreData(with trackerId: UUID, and date: Date) -> TrackerRecordCoreData? {
         let request = TrackerRecordCoreData.fetchRequest()
         request.returnsObjectsAsFaults = false
         request.predicate = NSPredicate(
@@ -78,16 +75,12 @@ final class TrackerRecordStore: NSObject {
         
         let trackerRecord = try? viewContext.fetch(request).first
         return trackerRecord
-        
     }
     
     func save(record: TrackerRecord, with tracker: TrackerCoreData) throws {
-        
         let recordEntity = TrackerRecordCoreData(context: viewContext)
-        
         recordEntity.trackerId = record.id
         recordEntity.time = record.time
-        
         recordEntity.tracker = tracker
         
         tracker.addToTrackerRecords(recordEntity)
@@ -99,7 +92,7 @@ final class TrackerRecordStore: NSObject {
         }
     }
     
-    func saveContext() throws {
+    private func saveContext() throws {
         if viewContext.hasChanges {
             do{
                 try viewContext.save()
@@ -111,9 +104,8 @@ final class TrackerRecordStore: NSObject {
 }
 
 extension TrackerRecordStore: NSFetchedResultsControllerDelegate {
-    
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         try? controller.performFetch()
-        dataProvider.updateCompletedTrackersData()
+        dataProvider?.updateCompletedTrackersData()
     }
 }

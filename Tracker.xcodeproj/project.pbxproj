@@ -25,7 +25,6 @@
 		FB37C1502B3363EC0072AF20 /* TrackerTypeSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37C14F2B3363EC0072AF20 /* TrackerTypeSelectionViewController.swift */; };
 		FB37C1522B33641B0072AF20 /* Images.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37C1512B33641B0072AF20 /* Images.swift */; };
 		FB37C1542B33644C0072AF20 /* ColorNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37C1532B33644C0072AF20 /* ColorNames.swift */; };
-		FB37C1562B3364BA0072AF20 /* Emojis.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37C1552B3364BA0072AF20 /* Emojis.swift */; };
 		FB37C1582B3364EF0072AF20 /* CustomTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37C1572B3364EF0072AF20 /* CustomTextField.swift */; };
 		FB37C15A2B3365230072AF20 /* AlertPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37C1592B3365230072AF20 /* AlertPresenter.swift */; };
 		FB37C15C2B3365A10072AF20 /* TrackerCreationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37C15B2B3365A10072AF20 /* TrackerCreationViewController.swift */; };
@@ -45,7 +44,6 @@
 		FB627E002B4F0D720049F7BC /* TrackerCategoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB627DFF2B4F0D720049F7BC /* TrackerCategoryStore.swift */; };
 		FB627E022B4F0D890049F7BC /* TrackerRecordStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB627E012B4F0D890049F7BC /* TrackerRecordStore.swift */; };
 		FBCF1B262B3DEB2400F05B15 /* Tracker.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = FBCF1B242B3DEB2400F05B15 /* Tracker.xcdatamodeld */; };
-		FBCF1B282B3DFBD300F05B15 /* DataBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCF1B272B3DFBD300F05B15 /* DataBase.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,7 +67,6 @@
 		FB37C14F2B3363EC0072AF20 /* TrackerTypeSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerTypeSelectionViewController.swift; sourceTree = "<group>"; };
 		FB37C1512B33641B0072AF20 /* Images.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Images.swift; sourceTree = "<group>"; };
 		FB37C1532B33644C0072AF20 /* ColorNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorNames.swift; sourceTree = "<group>"; };
-		FB37C1552B3364BA0072AF20 /* Emojis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emojis.swift; sourceTree = "<group>"; };
 		FB37C1572B3364EF0072AF20 /* CustomTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTextField.swift; sourceTree = "<group>"; };
 		FB37C1592B3365230072AF20 /* AlertPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertPresenter.swift; sourceTree = "<group>"; };
 		FB37C15B2B3365A10072AF20 /* TrackerCreationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerCreationViewController.swift; sourceTree = "<group>"; };
@@ -89,7 +86,6 @@
 		FB627DFF2B4F0D720049F7BC /* TrackerCategoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerCategoryStore.swift; sourceTree = "<group>"; };
 		FB627E012B4F0D890049F7BC /* TrackerRecordStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerRecordStore.swift; sourceTree = "<group>"; };
 		FBCF1B252B3DEB2400F05B15 /* Tracker.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Tracker.xcdatamodel; sourceTree = "<group>"; };
-		FBCF1B272B3DFBD300F05B15 /* DataBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBase.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -151,7 +147,6 @@
 				FB37C1322B328DC40072AF20 /* Assets.xcassets */,
 				FB37C1342B328DC40072AF20 /* LaunchScreen.storyboard */,
 				FB37C1372B328DC40072AF20 /* Info.plist */,
-				FBCF1B272B3DFBD300F05B15 /* DataBase.swift */,
 			);
 			path = Tracker;
 			sourceTree = "<group>";
@@ -161,7 +156,6 @@
 			children = (
 				FB37C1532B33644C0072AF20 /* ColorNames.swift */,
 				FB2AEB372B5D9D8A008B094C /* CoreDataNames.swift */,
-				FB37C1552B3364BA0072AF20 /* Emojis.swift */,
 				FB37C1512B33641B0072AF20 /* Images.swift */,
 				FB2AEB2F2B55BC16008B094C /* TrackerColorNames.swift */,
 			);
@@ -333,14 +327,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB37C16C2B336A280072AF20 /* TrackerCell.swift in Sources */,
-				FB37C1562B3364BA0072AF20 /* Emojis.swift in Sources */,
 				FB37C15A2B3365230072AF20 /* AlertPresenter.swift in Sources */,
 				FB37C1742B336B260072AF20 /* StatisticsViewController.swift in Sources */,
 				FB627E002B4F0D720049F7BC /* TrackerCategoryStore.swift in Sources */,
 				FB2AEB422B645A93008B094C /* DateExtension.swift in Sources */,
 				FB2AEB382B5D9D8A008B094C /* CoreDataNames.swift in Sources */,
 				FB2AEB322B56F917008B094C /* TrackerCreationEmojiCell.swift in Sources */,
-				FBCF1B282B3DFBD300F05B15 /* DataBase.swift in Sources */,
 				FB37C1522B33641B0072AF20 /* Images.swift in Sources */,
 				FB37C1682B3367FE0072AF20 /* TrackerSchedule.swift in Sources */,
 				FB37C1662B3367C00072AF20 /* TrackerType.swift in Sources */,
