@@ -9,7 +9,6 @@ import UIKit
 
 extension UILabel {
     
-    
     func generateScheduleList(from trackerSchedule: Set<TrackerSchedule>) {
         
         var scheduleList: String = ""

@@ -10,13 +10,21 @@ import UIKit
 protocol TrackersViewControllerProtocol: AnyObject {
     
     var currentDate: Date { get }
+    var searchTrackerName: String? { get }
     func newTrackerViewControllerPresenting(type: TrackerType)
-    func updateTrackersData(with trackerCategories: [TrackerCategory]?, and trackerRecords: [TrackerRecord]?)
+    func updateCell(at: IndexPath)
+    func updateTrackersData()
     func warnFutureCompletion()
+    func warnSaveTrackerFailure()
+    func warnSaveRecordFailure()
 }
 
 final class TrackersViewController: UIViewController {
     
+    var currentDate: Date = Date()
+    var searchTrackerName: String?
+    
+    private let dataProvider: DataProviderProtocol
     private let presenter: TrackersPresenterProtocol
     
     private let collectionView: UICollectionView = {
@@ -25,12 +33,10 @@ final class TrackersViewController: UIViewController {
         
         view.register(TrackerCell.self, forCellWithReuseIdentifier: TrackerCell.reuseIdentifier)
         view.register(TrackersSectionHeader.self,
-                       forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-                       withReuseIdentifier: TrackersSectionHeader.reuseIdentifier)
+                      forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+                      withReuseIdentifier: TrackersSectionHeader.reuseIdentifier)
         return view
     }()
-    
-    var currentDate: Date = Date()
     
     private let datePicker: UIDatePicker = {
         let datePicker = UIDatePicker()
@@ -40,7 +46,6 @@ final class TrackersViewController: UIViewController {
         datePicker.locale = Locale(identifier: "ru_RU")
         return datePicker
     }()
-    
     
     private let labelTitle = {
         let label = UILabel()
@@ -55,14 +60,8 @@ final class TrackersViewController: UIViewController {
         return searchBar
     }()
     
-    private var categories: [TrackerCategory] = []
-    
-    private var completedTrackers: [TrackerRecord] = []
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        presenter.viewDidLoad()
         
         setUpUI()
         
@@ -71,8 +70,9 @@ final class TrackersViewController: UIViewController {
         searchTextField.delegate = self
     }
     
-    init(presenter: TrackersPresenterProtocol) {
+    init(presenter: TrackersPresenterProtocol, provider: DataProviderProtocol) {
         self.presenter = presenter
+        self.dataProvider = provider
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -82,11 +82,25 @@ final class TrackersViewController: UIViewController {
     }
     
     @objc
+    private func dateSelected(){
+        
+        currentDate = datePicker.date
+        presenter.updateCollection(withRecords: false)
+    }
+    
+    @objc
     private func newTrackerButtonTapped() {
         
         let trackerTypeSelectionVC = TrackerTypeSelectionViewController(presenter: presenter)
         trackerTypeSelectionVC.modalPresentationStyle = .popover
         present(trackerTypeSelectionVC, animated: true)
+    }
+    
+    @objc
+    private func searchTextEdited(){
+        
+        searchTrackerName = searchTextField.text
+        presenter.updateCollection(withRecords: true)
     }
     
     func newTrackerViewControllerPresenting(type: TrackerType){
@@ -132,17 +146,8 @@ final class TrackersViewController: UIViewController {
         searchTextField.addTarget(self, action: #selector(searchTextEdited), for: .editingChanged)
     }
     
-    @objc
-    private func searchTextEdited(){
-        
-        presenter.updateCollection(withRecords: true, and: searchTextField.text)
-    }
-    
-    @objc
-    private func dateSelected(){
-        
-        currentDate = datePicker.date
-        presenter.updateCollection(withRecords: false, and: searchTextField.text)
+    func updateCell(at: IndexPath){
+        collectionView.reloadItems(at: [at])
     }
 }
 
@@ -153,7 +158,10 @@ extension TrackersViewController: UICollectionViewDelegate {
 extension TrackersViewController: UICollectionViewDataSource {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        if categories.count == 0 {
+        
+        let categoriesNumber = dataProvider.numberOfSections()
+        
+        if categoriesNumber == 0 {
             
             if let plugView = collectionView.backgroundView as? TrackersCollectionPlugView {
                 
@@ -170,13 +178,11 @@ extension TrackersViewController: UICollectionViewDataSource {
             }
         }
         
-        return categories.count
+        return categoriesNumber
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        
-        let category = categories[section]
-        return category.trackers.count
+        return dataProvider.numberOfItems(in: section)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -187,22 +193,12 @@ extension TrackersViewController: UICollectionViewDataSource {
         
         cell.presenter = presenter
         
-        let tracker: Tracker = categories[indexPath.section].trackers[indexPath.row]
+        let tracker: Tracker = dataProvider.getTracker(at: indexPath)
         
-        var completeDays: Int = 0
-        var complete: Bool = false
+        var completeDays: Int = 20
+        var complete: Bool = true
         
-        completedTrackers.forEach {
-            
-            if $0.id == tracker.id {
-                
-                completeDays += 1
-                
-                if  Calendar.current.isDate(currentDate, inSameDayAs: $0.time) {
-                    complete = true
-                }
-            }
-        }
+        (completeDays, complete) = dataProvider.completeTrackerState(for: tracker.id, at: currentDate)
         
         cell.days = completeDays
         cell.completed = complete
@@ -223,9 +219,9 @@ extension TrackersViewController: UICollectionViewDataSource {
         
         let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind,
                                                                          withReuseIdentifier: reuseIdentifier,
-                                                                         for: indexPath) as! TrackersSectionHeader
+                                                                         for: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
         
-        let headerText = categories[indexPath.section].title
+        let headerText = dataProvider.category(at: indexPath).title ?? ""
         headerView.setHeader(with: headerText)
         
         return headerView
@@ -261,7 +257,7 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
         
         let headerView = self.collectionView(collectionView,
                                              viewForSupplementaryElementOfKind: UICollectionView.elementKindSectionHeader,
-                                             at: indexPath) as! TrackersSectionHeader
+                                             at: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
         
         return headerView.systemLayoutSizeFitting(CGSize(width: collectionView.frame.width,
                                                          height: UIView.layoutFittingExpandedSize.height),
@@ -279,26 +275,33 @@ extension TrackersViewController: UITextFieldDelegate {
     }
 }
 
-
 extension TrackersViewController: TrackersViewControllerProtocol {
     
-    func updateTrackersData(with trackerCategories: [TrackerCategory]?, and trackerRecords: [TrackerRecord]?){
-        if let trackerCategories = trackerCategories {
-            categories = trackerCategories
-        }
-        
-        if let trackerRecords = trackerRecords {
-            completedTrackers = trackerRecords
-        }
-        
+    func updateTrackersData(){
         collectionView.reloadData()
     }
     
     func warnFutureCompletion() {
-        let alert = UIAlertController(title: "Так не пойдёт!", message: "Нельзя отмечать карточку для будущей даты", preferredStyle: .alert)
         let action = UIAlertAction(title: "Понятно", style: .cancel)
-        alert.addAction(action)
-        self.present(alert, animated: true)
+        AlertPresenter.shared.presentAlert(title: "Так не пойдёт!",
+                                           message: "Нельзя отмечать карточку для будущей даты",
+                                           actions: [action],
+                                           target: self)
+    }
+    
+    func warnSaveRecordFailure() {
+        let action = UIAlertAction(title: "Жаль", style: .cancel)
+        AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
+                                           message: "К сожалению не удалось отметить статус выполнения трекера :(",
+                                           actions: [action],
+                                           target: self)
+    }
+    
+    func warnSaveTrackerFailure() {
+        let action = UIAlertAction(title: "Жаль", style: .cancel)
+        AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
+                                           message: "К сожалению возникла ошибка при сохранении трекера :(",
+                                           actions: [action],
+                                           target: self)
     }
 }
-

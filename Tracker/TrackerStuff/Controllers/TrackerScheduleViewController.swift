@@ -52,6 +52,13 @@ final class TrackerScheduleViewController: UIViewController {
         setUpUI()
     }
     
+    @objc
+    private func scheduleMade(){
+        
+        delegate?.scheduleMade(with: schedule)
+        dismiss(animated: true)
+    }
+    
     private func setUpUI(){
         
         view.backgroundColor = .white
@@ -85,13 +92,6 @@ final class TrackerScheduleViewController: UIViewController {
         } else {
             schedule.remove(cellItemValue[id])
         }
-    }
-    
-    @objc
-    func scheduleMade(){
-        
-        delegate?.scheduleMade(with: schedule)
-        dismiss(animated: true)
     }
 }
 

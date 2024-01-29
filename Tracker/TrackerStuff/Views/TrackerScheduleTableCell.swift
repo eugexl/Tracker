@@ -38,7 +38,7 @@ final class TrackerScheduleTableCell: UITableViewCell {
         super.init(coder: coder)
     }
     
-    func setUpUI(){
+    private func setUpUI(){
         
         [labelCell, switchCell].forEach{
             $0.translatesAutoresizingMaskIntoConstraints = false
