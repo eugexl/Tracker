@@ -23,7 +23,8 @@ final class TrackerCell: UICollectionViewCell {
         }
     }
     
-    var presenter: TrackersPresenterProtocol?
+    var viewModel: TrackerViewModelProtocol?
+    
     var trackerId: UUID?
     
     private let buttonCompleteTracker: UIButton = {
@@ -92,10 +93,10 @@ final class TrackerCell: UICollectionViewCell {
     @objc
     private func buttonCompleteTrackerTapped(){
         
-        guard let presenter = presenter, let trackerId = trackerId else {
+        guard let viewModel = viewModel, let trackerId = trackerId else {
             return
         }
-        presenter.completeTracker(with: trackerId, indeed: !completed)
+        viewModel.completeTracker(with: trackerId, indeed: !completed)
     }
     
     private func setUpUI(){

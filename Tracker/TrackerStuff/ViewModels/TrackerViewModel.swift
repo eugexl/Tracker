@@ -7,42 +7,70 @@
 
 import UIKit
 
-protocol DataProviderProtocol {
+protocol TrackerViewModelProtocol {
+    var updateCell: ((_ at: IndexPath) -> Void)? { get set }
+    var updateTrackersData: (() -> Void)? { get set }
+    var warnFutureCompletion: (() -> Void)? { get set }
+    var warnSaveRecordFailure: (() -> Void)? { get set }
+    var warnSaveTrackerFailure: (() -> Void)? { get set }
+    
     func category(at indexPath: IndexPath) -> TrackerCategoryCoreData
-    func completeTracker(with: TrackerRecord, indeed: Bool) throws -> IndexPath?
+    func completeTracker(with id: UUID, indeed: Bool)
     func completeTrackerState(for trackerId: UUID, at date: Date) -> (Int, Bool)
     func getTracker(at: IndexPath) -> Tracker
     func numberOfItems(in section: Int) -> Int
     func numberOfSections() -> Int
-    func save(tracker: Tracker, to categoryWithTitle: String, completionHandler: @escaping (Result<Void, Error>) -> Void)
-    func updateCollectionData(with date: Date, and searchfilter: String?, completionHandler: (() -> Void)?)
+    func save(tracker: Tracker, to categoryWithTitle: String)
+    func updateCollectionData(with date: Date, and searchfilter: String?)
 }
 
-final class DataProvider {
+final class TrackerViewModel {
     
     private lazy var trackerStore: TrackerStore = TrackerStore(dataProvider: self)
     private lazy var categoryStore: TrackerCategoryStore = TrackerCategoryStore(dataProvider: self, trackerStore: trackerStore)
     private lazy var recordStore: TrackerRecordStore = TrackerRecordStore(dataProvider: self)
     
-    private var categories: [TrackerCategory] = [TrackerCategory]()
+    private var categories: [TrackerCategory] = [TrackerCategory]() {
+        didSet {
+            self.updateTrackersData?()
+        }
+    }
     private var completedTrackers: [TrackerRecord] = [TrackerRecord]()
-    var filterDay: Int = 0
+    
+    var filterDate: Date = Date()
     var filterName: String = ""
+    
+    var updateCell: ((_ at: IndexPath) -> Void)?
+    var updateTrackersData: (() -> Void)?
+    var warnFutureCompletion: (() -> Void)?
+    var warnSaveRecordFailure: (() -> Void)?
+    var warnSaveTrackerFailure: (() -> Void)?
     
     init(){
         trackerStore.recordStore = recordStore
-        updateCollectionData(with: Date(), and: nil, completionHandler: nil)
+        updateCollectionData(with: filterDate, and: nil)
         updateCompletedTrackersData()
     }
 }
 
-extension DataProvider: DataProviderProtocol {
+extension TrackerViewModel: TrackerViewModelProtocol {
     
     func category(at indexPath: IndexPath) -> TrackerCategoryCoreData {
         return categoryStore.resultsController.object(at: indexPath)
     }
     
-    func completeTracker(with trackerRecord: TrackerRecord, indeed: Bool) throws -> IndexPath? {
+    func completeTracker(with trackerId: UUID, indeed: Bool){
+        guard let date = filterDate.woTime else {
+            return
+        }
+        
+        if filterDate > Date() {
+            warnFutureCompletion?()
+            return
+        }
+        
+        let trackerRecord = TrackerRecord(id: trackerId, time: date)
+        
         do {
             guard let tracker = trackerStore.getTracker(with: trackerRecord.id) else {
                 throw CDErrors.noTrackerFound
@@ -52,9 +80,11 @@ extension DataProvider: DataProviderProtocol {
             } else {
                 try recordStore.delete(record: trackerRecord)
             }
-            return getIndexPathOfTracker(with: trackerRecord.id)
+            if let indexPath = getIndexPathOfTracker(with: trackerRecord.id) {
+                updateCell?(indexPath)
+            }
         } catch {
-            throw CDErrors.cannotSaveContext
+            warnSaveRecordFailure?()
         }
     }
     
@@ -102,29 +132,27 @@ extension DataProvider: DataProviderProtocol {
         return categories[section].trackers.count
     }
     
-    func save(tracker: Tracker, to categoryWithTitle: String, completionHandler: @escaping (Result<Void,Error>) -> Void) {
+    func save(tracker: Tracker, to categoryWithTitle: String) {
         
         let categoryItem = categoryStore.category(with: categoryWithTitle)
         
         do {
             try trackerStore.save(tracker: tracker, to: categoryItem)
-            completionHandler(.success(()))
+            updateCollectionData(with: filterDate, and: filterName)
         } catch {
-            completionHandler(.failure(error))
+            DispatchQueue.main.async {
+                self.warnSaveTrackerFailure?()
+            }
         }
     }
     
-    func updateCollectionData(with date: Date, and searchFilter: String?, completionHandler: (() -> Void)? ) {
-        guard let day = Calendar.current.dateComponents([.weekday], from: date).weekday else {
-            return
-        }
+    func updateCollectionData(with date: Date, and searchFilter: String?) {
         
-        filterDay = day
+        filterDate = date
         filterName = searchFilter ?? ""
         
         if let categories = categoryStore.getTrackerCategories() {
             self.categories = categories
-            completionHandler?()
         }
     }
     
@@ -134,3 +162,5 @@ extension DataProvider: DataProviderProtocol {
         }
     }
 }
+
+

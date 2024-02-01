@@ -27,7 +27,7 @@ final class TrackerCreationViewController: UIViewController {
     
     private let newTrackerType: TrackerType
     
-    private let presenter: TrackersPresenterProtocol
+    private let viewModel: TrackerViewModelProtocol
     
     private let tableCellReuseIdentifier: String = "TableCellSubtitle"
     
@@ -123,9 +123,9 @@ final class TrackerCreationViewController: UIViewController {
         trackerCategory = newTrackerType == .habit ? "Категория для отладки привычек" : "Категория для отладки событий"
     }
     
-    init(presenter: TrackersPresenterProtocol, type: TrackerType){
+    init(viewModel: TrackerViewModelProtocol, type: TrackerType){
         
-        self.presenter = presenter
+        self.viewModel = viewModel
         self.newTrackerType = type
         
         super.init(nibName: nil, bundle: nil)
@@ -249,7 +249,7 @@ final class TrackerCreationViewController: UIViewController {
                               emoji: emoji,
                               schedule: trackerSchedule)
         
-        presenter.save(tracker: tracker, to: trackerCategory)
+        viewModel.save(tracker: tracker, to: trackerCategory)
         dismiss(animated: true)
     }
     
@@ -390,7 +390,7 @@ extension TrackerCreationViewController: UICollectionViewDataSource {
         
         let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind,
                                                                          withReuseIdentifier: reuseIdentifier,
-                                                                            for: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
+                                                                         for: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
         
         let headerText = indexPath.section == 0 ? "Emoji" : "Цвет"
         headerView.setHeader(with: headerText)
@@ -443,5 +443,4 @@ extension TrackerCreationViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         4
     }
-    
 }

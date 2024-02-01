@@ -10,7 +10,7 @@ import CoreData
 
 final class TrackerCategoryStore: NSObject  {
     
-    private weak var dataProvider: DataProvider?
+    private weak var viewModel: TrackerViewModel?
     private weak var trackerStore: TrackerStore?
     private let viewContext: NSManagedObjectContext
     
@@ -30,16 +30,16 @@ final class TrackerCategoryStore: NSObject  {
         return fetchResultController
     }()
     
-    convenience init(dataProvider: DataProvider, trackerStore: TrackerStore) {
+    convenience init(dataProvider: TrackerViewModel, trackerStore: TrackerStore) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
             fatalError("Возникла ошибка при инициализации AppDelegate")
         }
         self.init(viewContext: appDelegate.persistentContainer.viewContext, provider: dataProvider, trackerStore: trackerStore)
     }
     
-    init(viewContext: NSManagedObjectContext, provider: DataProvider, trackerStore: TrackerStore) {
+    init(viewContext: NSManagedObjectContext, provider: TrackerViewModel, trackerStore: TrackerStore) {
         self.viewContext = viewContext
-        self.dataProvider = provider
+        self.viewModel = provider
         self.trackerStore = trackerStore
     }
     

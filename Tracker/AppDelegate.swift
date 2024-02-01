@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  Tracker 15.1
+//  Tracker 16
 //
 //  Created by Eugene Dmitrichenko on 20.12.2023.
 //
@@ -16,7 +16,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         self.window = UIWindow(frame: UIScreen.main.bounds)
-        self.window?.rootViewController = TabBarController()
+        
+        let onboardingController = OnboardingPageController(transitionStyle: .scroll,
+                                                                   navigationOrientation: .horizontal,
+                                                                   options: nil)
+        
+        self.window?.rootViewController = onboardingController
         self.window?.makeKeyAndVisible()
         
         ScheduleTransformer.register()

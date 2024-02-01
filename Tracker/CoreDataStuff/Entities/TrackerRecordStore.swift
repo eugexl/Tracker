@@ -10,7 +10,7 @@ import CoreData
 
 final class TrackerRecordStore: NSObject {
     
-    private weak var dataProvider: DataProvider?
+    private weak var viewModel: TrackerViewModel?
     private let viewContext: NSManagedObjectContext
     
     lazy var resultsController: NSFetchedResultsController<TrackerRecordCoreData> = {
@@ -30,16 +30,16 @@ final class TrackerRecordStore: NSObject {
         return fetchResultController
     }()
     
-    convenience init(dataProvider: DataProvider) {
+    convenience init(dataProvider: TrackerViewModel) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
             fatalError("Возникла ошибка при инициализации AppDelegate")
         }
         self.init(viewContext: appDelegate.persistentContainer.viewContext , provider: dataProvider)
     }
     
-    init(viewContext: NSManagedObjectContext, provider: DataProvider) {
+    init(viewContext: NSManagedObjectContext, provider: TrackerViewModel) {
         self.viewContext = viewContext
-        self.dataProvider = provider
+        self.viewModel = provider
     }
     
     func delete(record: TrackerRecord) throws {
@@ -106,6 +106,6 @@ final class TrackerRecordStore: NSObject {
 extension TrackerRecordStore: NSFetchedResultsControllerDelegate {
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         try? controller.performFetch()
-        dataProvider?.updateCompletedTrackersData()
+        viewModel?.updateCompletedTrackersData()
     }
 }

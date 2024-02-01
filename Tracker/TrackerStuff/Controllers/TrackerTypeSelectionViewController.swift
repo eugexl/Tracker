@@ -9,7 +9,7 @@ import UIKit
 
 final class TrackerTypeSelectionViewController: UIViewController {
     
-    private let presenter: TrackersPresenterProtocol
+    private let delegate: TrackerCreationProtocol
     
     private let buttonHabbit = {
         let button = UIButton()
@@ -45,9 +45,9 @@ final class TrackerTypeSelectionViewController: UIViewController {
         buttonIrregularEvents.addTarget(self, action: #selector(buttonIrregularEventsTapped), for: .touchUpInside)
     }
     
-    init(presenter: TrackersPresenterProtocol){
+    init(delegate: TrackerCreationProtocol){
         
-        self.presenter = presenter
+        self.delegate = delegate
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -59,13 +59,13 @@ final class TrackerTypeSelectionViewController: UIViewController {
     @objc
     private func buttonHabbitTapped(){
         dismiss(animated: true)
-        presenter.createTracker(type: .habit)
+        delegate.newTrackerViewControllerPresenting(type: .habit)
     }
     
     @objc
     private func buttonIrregularEventsTapped(){
         dismiss(animated: true)
-        presenter.createTracker(type: .irregularEvent)
+        delegate.newTrackerViewControllerPresenting(type: .irregularEvent)
     }
     
     private func setUpUI(){

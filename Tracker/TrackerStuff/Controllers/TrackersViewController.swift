@@ -19,13 +19,24 @@ protocol TrackersViewControllerProtocol: AnyObject {
     func warnSaveRecordFailure()
 }
 
+protocol TrackerCreationProtocol {
+    func newTrackerViewControllerPresenting(type: TrackerType)
+}
+
 final class TrackersViewController: UIViewController {
     
-    var currentDate: Date = Date()
-    var searchTrackerName: String?
+    var currentDate: Date = Date() {
+        didSet {
+            viewModel.updateCollectionData(with: currentDate, and: searchTrackerName)
+        }
+    }
+    var searchTrackerName: String? {
+        didSet {
+            viewModel.updateCollectionData(with: currentDate, and: searchTrackerName)
+        }
+    }
     
-    private let dataProvider: DataProviderProtocol
-    private let presenter: TrackersPresenterProtocol
+    private var viewModel: TrackerViewModelProtocol
     
     private let collectionView: UICollectionView = {
         
@@ -63,18 +74,18 @@ final class TrackersViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setUpUI()
+        setupUI()
         
         collectionView.dataSource = self
         collectionView.delegate = self
         searchTextField.delegate = self
     }
     
-    init(presenter: TrackersPresenterProtocol, provider: DataProviderProtocol) {
-        self.presenter = presenter
-        self.dataProvider = provider
+    init(viewModel: TrackerViewModelProtocol){
+        self.viewModel = viewModel
         
         super.init(nibName: nil, bundle: nil)
+        setupBindings()
     }
     
     required init?(coder: NSCoder) {
@@ -85,13 +96,12 @@ final class TrackersViewController: UIViewController {
     private func dateSelected(){
         
         currentDate = datePicker.date
-        presenter.updateCollection(withRecords: false)
     }
     
     @objc
     private func newTrackerButtonTapped() {
         
-        let trackerTypeSelectionVC = TrackerTypeSelectionViewController(presenter: presenter)
+        let trackerTypeSelectionVC = TrackerTypeSelectionViewController(delegate: self)
         trackerTypeSelectionVC.modalPresentationStyle = .popover
         present(trackerTypeSelectionVC, animated: true)
     }
@@ -100,17 +110,17 @@ final class TrackersViewController: UIViewController {
     private func searchTextEdited(){
         
         searchTrackerName = searchTextField.text
-        presenter.updateCollection(withRecords: true)
     }
     
-    func newTrackerViewControllerPresenting(type: TrackerType){
-        
-        let newTrackerVC = TrackerCreationViewController(presenter: presenter, type: type)
-        newTrackerVC.modalPresentationStyle = .popover
-        present(newTrackerVC, animated: true)
+    private func setupBindings(){
+        viewModel.updateTrackersData = collectionView.reloadData
+        viewModel.warnFutureCompletion = warnFutureCompletion
+        viewModel.warnSaveRecordFailure = warnSaveRecordFailure
+        viewModel.warnSaveTrackerFailure = warnSaveTrackerFailure
+        viewModel.updateCell = updateCell
     }
     
-    private func setUpUI () {
+    private func setupUI () {
         
         view.backgroundColor = .white
         navigationController?.navigationBar.tintColor = .darkGray
@@ -151,6 +161,15 @@ final class TrackersViewController: UIViewController {
     }
 }
 
+extension TrackersViewController: TrackerCreationProtocol {
+    func newTrackerViewControllerPresenting(type: TrackerType){
+        
+        let newTrackerVC = TrackerCreationViewController(viewModel: viewModel, type: type)
+        newTrackerVC.modalPresentationStyle = .popover
+        present(newTrackerVC, animated: true)
+    }
+}
+
 extension TrackersViewController: UICollectionViewDelegate {
     // TODO: Необходимо доделать пункты контекстного меню
 }
@@ -159,7 +178,7 @@ extension TrackersViewController: UICollectionViewDataSource {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         
-        let categoriesNumber = dataProvider.numberOfSections()
+        let categoriesNumber = viewModel.numberOfSections()
         
         if categoriesNumber == 0 {
             
@@ -182,7 +201,7 @@ extension TrackersViewController: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return dataProvider.numberOfItems(in: section)
+        return viewModel.numberOfItems(in: section)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -191,14 +210,14 @@ extension TrackersViewController: UICollectionViewDataSource {
             return UICollectionViewCell()
         }
         
-        cell.presenter = presenter
+        cell.viewModel = viewModel
         
-        let tracker: Tracker = dataProvider.getTracker(at: indexPath)
+        let tracker: Tracker = viewModel.getTracker(at: indexPath)
         
         var completeDays: Int = 20
         var complete: Bool = true
         
-        (completeDays, complete) = dataProvider.completeTrackerState(for: tracker.id, at: currentDate)
+        (completeDays, complete) = viewModel.completeTrackerState(for: tracker.id, at: currentDate)
         
         cell.days = completeDays
         cell.completed = complete
@@ -221,7 +240,7 @@ extension TrackersViewController: UICollectionViewDataSource {
                                                                          withReuseIdentifier: reuseIdentifier,
                                                                          for: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
         
-        let headerText = dataProvider.category(at: indexPath).title ?? ""
+        let headerText = viewModel.category(at: indexPath).title ?? ""
         headerView.setHeader(with: headerText)
         
         return headerView
