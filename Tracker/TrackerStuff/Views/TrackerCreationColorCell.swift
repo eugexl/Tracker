@@ -19,13 +19,13 @@ final class TrackerCreationColorCell: UICollectionViewCell {
         }
     }
     
-    private let colorView: UIView = {
+    private lazy var colorView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 8
         return view
     }()
     
-    private let selectionView: UIView = {
+    private lazy var selectionView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 8
         view.layer.borderWidth = 3

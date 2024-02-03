@@ -10,7 +10,7 @@ import CoreData
 
 final class TrackerCategoryStore: NSObject  {
     
-    private weak var viewModel: TrackerViewModel?
+    private weak var viewModel: TrackerViewModelProtocol?
     private weak var trackerStore: TrackerStore?
     private let viewContext: NSManagedObjectContext
     
@@ -30,16 +30,16 @@ final class TrackerCategoryStore: NSObject  {
         return fetchResultController
     }()
     
-    convenience init(dataProvider: TrackerViewModel, trackerStore: TrackerStore) {
+    convenience init(viewModel: TrackerViewModelProtocol, trackerStore: TrackerStore) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
             fatalError("Возникла ошибка при инициализации AppDelegate")
         }
-        self.init(viewContext: appDelegate.persistentContainer.viewContext, provider: dataProvider, trackerStore: trackerStore)
+        self.init(viewContext: appDelegate.persistentContainer.viewContext, viewModel: viewModel, trackerStore: trackerStore)
     }
     
-    init(viewContext: NSManagedObjectContext, provider: TrackerViewModel, trackerStore: TrackerStore) {
+    init(viewContext: NSManagedObjectContext, viewModel: TrackerViewModelProtocol, trackerStore: TrackerStore) {
         self.viewContext = viewContext
-        self.viewModel = provider
+        self.viewModel = viewModel
         self.trackerStore = trackerStore
     }
     
@@ -52,6 +52,14 @@ final class TrackerCategoryStore: NSObject  {
             saveContext()
             return categoryItem
         }
+    }
+    
+    func create(with title: String) {
+        
+        let newCategory = TrackerCategoryCoreData(context: viewContext)
+        newCategory.title = title
+        
+        saveContext()
     }
     
     func getTrackerCategories() -> [TrackerCategory]? {
@@ -91,5 +99,9 @@ final class TrackerCategoryStore: NSObject  {
 }
 
 extension TrackerCategoryStore: NSFetchedResultsControllerDelegate {
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) { }
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        try? controller.performFetch()
+        viewModel?.updateCategoriesData(with: nil, and: nil)
+    }
+    
 }

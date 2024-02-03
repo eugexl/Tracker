@@ -19,7 +19,7 @@ protocol TrackersViewControllerProtocol: AnyObject {
     func warnSaveRecordFailure()
 }
 
-protocol TrackerCreationProtocol {
+protocol TrackerCreationProtocol: AnyObject {
     func newTrackerViewControllerPresenting(type: TrackerType)
 }
 
@@ -27,18 +27,19 @@ final class TrackersViewController: UIViewController {
     
     var currentDate: Date = Date() {
         didSet {
-            viewModel.updateCollectionData(with: currentDate, and: searchTrackerName)
+            viewModel.updateCategoriesData(with: currentDate, and: searchTrackerName)
         }
     }
+    
     var searchTrackerName: String? {
         didSet {
-            viewModel.updateCollectionData(with: currentDate, and: searchTrackerName)
+            viewModel.updateCategoriesData(with: currentDate, and: searchTrackerName)
         }
     }
     
     private var viewModel: TrackerViewModelProtocol
     
-    private let collectionView: UICollectionView = {
+    private lazy var collectionView: UICollectionView = {
         
         let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         
@@ -49,7 +50,7 @@ final class TrackersViewController: UIViewController {
         return view
     }()
     
-    private let datePicker: UIDatePicker = {
+    private lazy var datePicker: UIDatePicker = {
         let datePicker = UIDatePicker()
         datePicker.translatesAutoresizingMaskIntoConstraints = false
         datePicker.preferredDatePickerStyle = .compact
@@ -58,16 +59,17 @@ final class TrackersViewController: UIViewController {
         return datePicker
     }()
     
-    private let labelTitle = {
+    private lazy var labelTitle = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 34, weight: .bold)
         label.text = "Трекеры"
         return label
     }()
     
-    private let searchTextField: UISearchTextField = {
+    private lazy var searchTextField: UISearchTextField = {
         let searchBar = UISearchTextField()
         searchBar.placeholder = "Поиск"
+        searchBar.backgroundColor = UIColor(named: ColorNames.background)
         return searchBar
     }()
     
@@ -178,20 +180,20 @@ extension TrackersViewController: UICollectionViewDataSource {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         
-        let categoriesNumber = viewModel.numberOfSections()
+        let categoriesNumber = viewModel.numberOfCategories()
         
         if categoriesNumber == 0 {
             
-            if let plugView = collectionView.backgroundView as? TrackersCollectionPlugView {
+            if let plugView = collectionView.backgroundView as? NoDataPlugView {
                 
                 plugView.fadeIn()
             } else {
                 
-                collectionView.backgroundView = TrackersCollectionPlugView(frame: collectionView.bounds)
+                collectionView.backgroundView = NoDataPlugView(frame: collectionView.bounds, labelText: "Что будем отслеживать?")
             }
         } else {
             
-            if let plugView = collectionView.backgroundView as? TrackersCollectionPlugView {
+            if let plugView = collectionView.backgroundView as? NoDataPlugView {
                 
                 plugView.fadeOut()
             }
@@ -300,27 +302,33 @@ extension TrackersViewController: TrackersViewControllerProtocol {
         collectionView.reloadData()
     }
     
-    func warnFutureCompletion() {
+    func warnFutureCompletion() { 
+        
+        weak var weakSelf = self
         let action = UIAlertAction(title: "Понятно", style: .cancel)
         AlertPresenter.shared.presentAlert(title: "Так не пойдёт!",
                                            message: "Нельзя отмечать карточку для будущей даты",
                                            actions: [action],
-                                           target: self)
+                                           target: weakSelf)
     }
     
     func warnSaveRecordFailure() {
+        
+        weak var weakSelf = self
         let action = UIAlertAction(title: "Жаль", style: .cancel)
         AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
                                            message: "К сожалению не удалось отметить статус выполнения трекера :(",
                                            actions: [action],
-                                           target: self)
+                                           target: weakSelf)
     }
     
     func warnSaveTrackerFailure() {
+        
+        weak var weakSelf = self
         let action = UIAlertAction(title: "Жаль", style: .cancel)
         AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
                                            message: "К сожалению возникла ошибка при сохранении трекера :(",
                                            actions: [action],
-                                           target: self)
+                                           target: weakSelf)
     }
 }

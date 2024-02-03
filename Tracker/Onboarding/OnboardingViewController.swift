@@ -9,12 +9,14 @@ import UIKit
 
 class OnboardingViewController: UIViewController {
     
-    private let imageView: UIImageView = {
+    static let onboardingWasShownKey = "OnboardingWasShownKey"
+    
+    private lazy var imageView: UIImageView = {
         let imageView = UIImageView()
         return imageView
     }()
     
-    private let label: UILabel = {
+    private lazy var label: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
         label.lineBreakMode = .byWordWrapping
@@ -23,7 +25,7 @@ class OnboardingViewController: UIViewController {
         return label
     }()
     
-    private let button: UIButton = {
+    private lazy var button: UIButton = {
         let button = UIButton()
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.setTitle("Вот это технологии!", for: .normal)
@@ -36,6 +38,12 @@ class OnboardingViewController: UIViewController {
         super.viewDidLoad()
         
         layoutUI()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        UserDefaults.standard.setValue(Bool(true), forKey: OnboardingViewController.onboardingWasShownKey)
     }
     
     private func layoutUI(){

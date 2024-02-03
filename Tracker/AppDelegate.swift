@@ -17,11 +17,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         self.window = UIWindow(frame: UIScreen.main.bounds)
         
-        let onboardingController = OnboardingPageController(transitionStyle: .scroll,
+        var rootController: UIViewController
+        
+        if UserDefaults.standard.object(forKey: OnboardingViewController.onboardingWasShownKey) != nil {
+            rootController = TabBarController()
+        } else {
+            rootController = OnboardingPageController(transitionStyle: .scroll,
                                                                    navigationOrientation: .horizontal,
                                                                    options: nil)
+        }
         
-        self.window?.rootViewController = onboardingController
+        self.window?.rootViewController = rootController
         self.window?.makeKeyAndVisible()
         
         ScheduleTransformer.register()

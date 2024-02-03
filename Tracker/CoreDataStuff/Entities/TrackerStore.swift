@@ -10,21 +10,21 @@ import CoreData
 
 final class TrackerStore: NSObject {
     
-    private weak var viewModel: TrackerViewModel?
+    private weak var viewModel: TrackerViewModelProtocol?
     private let viewContext: NSManagedObjectContext
     
     var recordStore: TrackerRecordStore?
     
-    convenience init(dataProvider: TrackerViewModel) {
+    convenience init(viewModel: TrackerViewModel) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
             fatalError("Возникла ошибка при инициализации AppDelegate")
         }
-        self.init(viewContext: appDelegate.persistentContainer.viewContext, provider: dataProvider)
+        self.init(viewContext: appDelegate.persistentContainer.viewContext, viewModel: viewModel)
     }
     
-    init(viewContext: NSManagedObjectContext, provider: TrackerViewModel) {
+    init(viewContext: NSManagedObjectContext, viewModel: TrackerViewModel) {
         self.viewContext = viewContext
-        self.viewModel = provider
+        self.viewModel = viewModel
     }
     
     func getTracker(with id: UUID) -> TrackerCoreData? {

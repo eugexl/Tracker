@@ -9,21 +9,29 @@ import UIKit
 
 final class TrackerCreationViewController: UIViewController {
     
-    private let colorList: [String] = [
+    private lazy var colorList: [String] = [
         "Color selection 1", "Color selection 2", "Color selection 3", "Color selection 4", "Color selection 5", "Color selection 6",
         "Color selection 7", "Color selection 8", "Color selection 9", "Color selection 10", "Color selection 11", "Color selection 12",
         "Color selection 13", "Color selection 14", "Color selection 15", "Color selection 16", "Color selection 17", "Color selection 18"
     ]
     
-    private var colorSelected: Int? = nil
+    private lazy var colorSelected: Int? = nil {
+        didSet {
+           testFormValidity()
+        }
+    }
     
-    private let emojiList: [String] = [
+    private lazy var emojiList: [String] = [
         "🙂", "😻", "🌺", "🐶", "❤️", "😱",
         "😇", "😡", "🥶", "🤔", "🙌", "🍔",
         "🥦", "🏓", "🥇", "🎸", "🏝", "😪"
     ]
     
-    private var emojiSelected: Int? = nil
+    private lazy var emojiSelected: Int? = nil {
+        didSet {
+           testFormValidity()
+        }
+    }
     
     private let newTrackerType: TrackerType
     
@@ -31,13 +39,22 @@ final class TrackerCreationViewController: UIViewController {
     
     private let tableCellReuseIdentifier: String = "TableCellSubtitle"
     
-    private let tableViewTrackerParameter = ["Категория", "Расписание"]
+    private lazy var tableViewTrackerParameter = ["Категория", "Расписание"]
     
     // FIXME: Необходимо будет убрать наименование отладочной категории
-    private var trackerCategory: String = ""
-    private var trackerSchedule: Set<TrackerSchedule> = Set<TrackerSchedule>()
+    lazy var trackerCategory: String = "" {
+        didSet {
+            tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
+           testFormValidity()
+        }
+    }
+    private lazy var trackerSchedule: Set<TrackerSchedule> = Set<TrackerSchedule>() {
+        didSet {
+           testFormValidity()
+        }
+    }
     
-    private let buttonCancel: UIButton = {
+    private lazy var buttonCancel: UIButton = {
         var button = UIButton()
         button.layer.borderWidth = 1.0
         button.layer.borderColor = UIColor(named: ColorNames.red)?.cgColor
@@ -49,17 +66,18 @@ final class TrackerCreationViewController: UIViewController {
         return button
     }()
     
-    private let buttonCreate: UIButton = {
+    private lazy var buttonCreate: UIButton = {
         let button = UIButton()
         button.backgroundColor = UIColor(named: ColorNames.gray)
         button.layer.cornerRadius = 16.0
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0, weight: .medium)
         button.setTitle("Создать", for: .normal)
         button.setTitleColor(UIColor(named: ColorNames.white), for: .normal)
+        button.isEnabled = false
         return button
     }()
     
-    private let collectionView: UICollectionView = {
+    private lazy var collectionView: UICollectionView = {
         let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
         view.bounces = false
         view.register(TrackerCreationEmojiCell.self, forCellWithReuseIdentifier: TrackerCreationEmojiCell.reuseIdentifier)
@@ -70,25 +88,25 @@ final class TrackerCreationViewController: UIViewController {
         return view
     }()
     
-    private let contentView: UIView = {
+    private lazy var contentView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
-    private let scrollView: UIScrollView = {
+    private lazy var scrollView: UIScrollView = {
         let view = UIScrollView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
-    private let titleLabel: UILabel = {
+    private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         return label
     }()
     
-    private let textField = {
+    private lazy var textField = {
         
         let textField = CustomTextField()
         textField.layer.cornerRadius = 16.0
@@ -100,7 +118,7 @@ final class TrackerCreationViewController: UIViewController {
         return textField
     }()
     
-    private let tableView = {
+    private lazy var tableView = {
         
         let tableView = UITableView()
         tableView.bounces = false
@@ -119,8 +137,6 @@ final class TrackerCreationViewController: UIViewController {
         textField.delegate = self
         collectionView.delegate = self
         collectionView.dataSource = self
-        
-        trackerCategory = newTrackerType == .habit ? "Категория для отладки привычек" : "Категория для отладки событий"
     }
     
     init(viewModel: TrackerViewModelProtocol, type: TrackerType){
@@ -216,29 +232,9 @@ final class TrackerCreationViewController: UIViewController {
     @objc
     private func buttonCreateTapped(){
         
-        guard let trackerName = textField.text, trackerName.count > 0 else {
-            let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
-            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!", message: "Необходимо указать название трекера", actions: [alertAction], target: self)
-            return
-        }
-        
-        if newTrackerType == .habit, trackerSchedule.count == 0 {
-            let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
-            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!", message: "Необходимо составить расписание трекера", actions: [alertAction], target: self)
-            return
-        }
-        
-        guard let selectedEmojiIndex = emojiSelected else {
-            let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
-            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!", message: "Необходимо выбрать emoji трекера", actions: [alertAction], target: self)
-            return
-        }
-        
-        guard let selectedColorIndex = colorSelected else {
-            let alertAction = UIAlertAction(title: "Понятно", style: .cancel)
-            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!", message: "Необходимо выбрать цвет трекера", actions: [alertAction], target: self)
-            return
-        }
+        guard let trackerName = textField.text else { return }
+        guard let selectedColorIndex = colorSelected else { return }
+        guard let selectedEmojiIndex = emojiSelected else { return }
         
         let emoji = emojiList[selectedEmojiIndex]
         let colorName = colorList[selectedColorIndex]
@@ -253,10 +249,46 @@ final class TrackerCreationViewController: UIViewController {
         dismiss(animated: true)
     }
     
+    func buttonCreateState(isEnabled: Bool){
+        
+        buttonCreate.backgroundColor = UIColor(named: isEnabled ? ColorNames.black : ColorNames.gray)
+        buttonCreate.isEnabled = isEnabled
+    }
+    
     func scheduleMade(with set: Set<TrackerSchedule>){
         
         self.trackerSchedule = set
         tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .automatic)
+    }
+  
+    
+    func testFormValidity(){
+        guard let trackerName = textField.text, trackerName.count > 0  else {
+            buttonCreateState(isEnabled: false);
+            return
+        }
+        
+        guard trackerCategory.count > 0 else {
+            buttonCreateState(isEnabled: false);
+            return
+        }
+        
+        if newTrackerType == .habit, trackerSchedule.count == 0 {
+            buttonCreateState(isEnabled: false);
+            return
+        }
+        
+        guard colorSelected != nil else {
+            buttonCreateState(isEnabled: false);
+            return
+        }
+        
+        guard emojiSelected != nil else {
+            buttonCreateState(isEnabled: false);
+            return
+        }
+        
+        buttonCreateState(isEnabled: true);
     }
 }
 
@@ -266,7 +298,10 @@ extension TrackerCreationViewController: UITableViewDelegate {
         
         switch indexPath.row {
             
-            // TODO: Добавить функционал выбора/добавления категорий - case 0:
+        case 0:
+            
+            let trackerCategoryVC = TrackerCategoryViewController(delegate: self, viewModel: viewModel)
+            present(trackerCategoryVC, animated: true)
             
         case 1:
             let trackerScheduleVC = TrackerScheduleViewController()
@@ -345,6 +380,10 @@ extension TrackerCreationViewController: UITextFieldDelegate {
         textField.resignFirstResponder()
         return true
     }
+    
+    func textFieldDidChangeSelection(_ textField: UITextField) {
+        testFormValidity()
+    }
 }
 
 extension TrackerCreationViewController: UICollectionViewDelegate {
@@ -367,6 +406,7 @@ extension TrackerCreationViewController: UICollectionViewDelegate {
                 }
                 (collectionView.cellForItem(at: indexPath) as? TrackerCreationColorCell)?.toggleSelection()
                 colorSelected = indexPath.row
+                
             }
         }
     }

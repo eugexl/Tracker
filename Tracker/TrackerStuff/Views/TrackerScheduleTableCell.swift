@@ -9,21 +9,21 @@ import UIKit
 
 final class TrackerScheduleTableCell: UITableViewCell {
     
-    var labelText: String? {
+    lazy var labelText: String? = "" {
         didSet {
             labelCell.text = labelText
         }
     }
     
-    var delegate: TrackerScheduleViewController?
+    weak var delegate: TrackerScheduleViewController?
     var cellId: Int?
     
-    private let labelCell = {
+    private lazy var labelCell = {
         let label = UILabel()
         return label
     }()
     
-    private let switchCell = {
+    private lazy var switchCell = {
         let cellSwitch = UISwitch()
         cellSwitch.onTintColor = UIColor(red: 55/255, green: 114/255, blue: 231/255, alpha: 1)
         return cellSwitch

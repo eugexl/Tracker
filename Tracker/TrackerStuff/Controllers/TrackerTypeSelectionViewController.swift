@@ -9,9 +9,9 @@ import UIKit
 
 final class TrackerTypeSelectionViewController: UIViewController {
     
-    private let delegate: TrackerCreationProtocol
+    private weak var delegate: TrackerCreationProtocol?
     
-    private let buttonHabbit = {
+    private lazy var buttonHabbit = {
         let button = UIButton()
         button.layer.cornerRadius = 16.0
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -20,7 +20,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
         return button
     }()
     
-    private let buttonIrregularEvents = {
+    private lazy var buttonIrregularEvents = {
         let button = UIButton()
         button.layer.cornerRadius = 16.0
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -29,7 +29,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
         return button
     }()
     
-    private let titleLabel = {
+    private lazy var titleLabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.text = "Создание трекера"
@@ -59,13 +59,13 @@ final class TrackerTypeSelectionViewController: UIViewController {
     @objc
     private func buttonHabbitTapped(){
         dismiss(animated: true)
-        delegate.newTrackerViewControllerPresenting(type: .habit)
+        delegate?.newTrackerViewControllerPresenting(type: .habit)
     }
     
     @objc
     private func buttonIrregularEventsTapped(){
         dismiss(animated: true)
-        delegate.newTrackerViewControllerPresenting(type: .irregularEvent)
+        delegate?.newTrackerViewControllerPresenting(type: .irregularEvent)
     }
     
     private func setUpUI(){
