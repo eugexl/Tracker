@@ -10,7 +10,7 @@ import Foundation
 protocol TrackerViewModelProtocol: AnyObject {
     var filterDate: Date { get }
     var filterName: String { get }
-    var updateCell: ((_ at: IndexPath) -> Void)? { get set }
+    var updateCell: ((_ at: [IndexPath]) -> Void)? { get set }
     var updateTrackersData: (() -> Void)? { get set }
     var updateCategoriesData: (() -> Void)? { get set }
     var warnFutureCompletion: (() -> Void)? { get set }
@@ -47,7 +47,7 @@ final class TrackerViewModel {
     var filterDate: Date = Date()
     var filterName: String = ""
     
-    var updateCell: ((_ at: IndexPath) -> Void)?
+    var updateCell: ((_ at: [IndexPath]) -> Void)?
     var updateCategoriesData: (() -> Void)?
     var updateTrackersData: (() -> Void)?
     var warnFutureCompletion: (() -> Void)?
@@ -94,7 +94,7 @@ extension TrackerViewModel: TrackerViewModelProtocol {
                 try recordStore.delete(record: trackerRecord)
             }
             if let indexPath = getIndexPathOfTracker(with: trackerRecord.id) {
-                updateCell?(indexPath)
+                updateCell?([indexPath])
             }
         } catch {
             warnSaveRecordFailure?()

@@ -12,7 +12,6 @@ protocol TrackersViewControllerProtocol: AnyObject {
     var currentDate: Date { get }
     var searchTrackerName: String? { get }
     func newTrackerViewControllerPresenting(type: TrackerType)
-    func updateCell(at: IndexPath)
     func updateTrackersData()
     func warnFutureCompletion()
     func warnSaveTrackerFailure()
@@ -115,11 +114,11 @@ final class TrackersViewController: UIViewController {
     }
     
     private func setupBindings(){
+        viewModel.updateCell = collectionView.reloadItems
         viewModel.updateTrackersData = collectionView.reloadData
         viewModel.warnFutureCompletion = warnFutureCompletion
         viewModel.warnSaveRecordFailure = warnSaveRecordFailure
         viewModel.warnSaveTrackerFailure = warnSaveTrackerFailure
-        viewModel.updateCell = updateCell
     }
     
     private func setupUI () {
@@ -156,10 +155,6 @@ final class TrackersViewController: UIViewController {
         ])
         datePicker.addTarget(self, action: #selector(dateSelected), for: .valueChanged)
         searchTextField.addTarget(self, action: #selector(searchTextEdited), for: .editingChanged)
-    }
-    
-    func updateCell(at: IndexPath){
-        collectionView.reloadItems(at: [at])
     }
 }
 
