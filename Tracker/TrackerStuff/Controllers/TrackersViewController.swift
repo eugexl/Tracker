@@ -12,10 +12,6 @@ protocol TrackersViewControllerProtocol: AnyObject {
     var currentDate: Date { get }
     var searchTrackerName: String? { get }
     func newTrackerViewControllerPresenting(type: TrackerType)
-    func updateTrackersData()
-    func warnFutureCompletion()
-    func warnSaveTrackerFailure()
-    func warnSaveRecordFailure()
 }
 
 protocol TrackerCreationProtocol: AnyObject {
@@ -116,9 +112,30 @@ final class TrackersViewController: UIViewController {
     private func setupBindings(){
         viewModel.updateCell = collectionView.reloadItems
         viewModel.updateTrackersData = collectionView.reloadData
-        viewModel.warnFutureCompletion = warnFutureCompletion
-        viewModel.warnSaveRecordFailure = warnSaveRecordFailure
-        viewModel.warnSaveTrackerFailure = warnSaveTrackerFailure
+        viewModel.warnFutureCompletion = { [weak self] in
+            guard let self = self else { return }
+            let action = UIAlertAction(title: "Понятно", style: .cancel)
+            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!",
+                                               message: "Нельзя отмечать карточку для будущей даты",
+                                               actions: [action],
+                                               target: self)
+        }
+        viewModel.warnSaveRecordFailure = { [weak self] in
+            guard let self = self else { return }
+            let action = UIAlertAction(title: "Жаль", style: .cancel)
+            AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
+                                               message: "К сожалению не удалось отметить статус выполнения трекера :(",
+                                               actions: [action],
+                                               target: self)
+        }
+        viewModel.warnSaveTrackerFailure = { [weak self] in
+            guard let self = self else { return }
+            let action = UIAlertAction(title: "Жаль", style: .cancel)
+            AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
+                                               message: "К сожалению возникла ошибка при сохранении трекера :(",
+                                               actions: [action],
+                                               target: self)
+        }
     }
     
     private func setupUI () {
@@ -288,42 +305,5 @@ extension TrackersViewController: UITextFieldDelegate {
         
         textField.resignFirstResponder()
         return true
-    }
-}
-
-extension TrackersViewController: TrackersViewControllerProtocol {
-    
-    func updateTrackersData(){
-        collectionView.reloadData()
-    }
-    
-    func warnFutureCompletion() { 
-        
-        weak var weakSelf = self
-        let action = UIAlertAction(title: "Понятно", style: .cancel)
-        AlertPresenter.shared.presentAlert(title: "Так не пойдёт!",
-                                           message: "Нельзя отмечать карточку для будущей даты",
-                                           actions: [action],
-                                           target: weakSelf)
-    }
-    
-    func warnSaveRecordFailure() {
-        
-        weak var weakSelf = self
-        let action = UIAlertAction(title: "Жаль", style: .cancel)
-        AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
-                                           message: "К сожалению не удалось отметить статус выполнения трекера :(",
-                                           actions: [action],
-                                           target: weakSelf)
-    }
-    
-    func warnSaveTrackerFailure() {
-        
-        weak var weakSelf = self
-        let action = UIAlertAction(title: "Жаль", style: .cancel)
-        AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
-                                           message: "К сожалению возникла ошибка при сохранении трекера :(",
-                                           actions: [action],
-                                           target: weakSelf)
     }
 }
