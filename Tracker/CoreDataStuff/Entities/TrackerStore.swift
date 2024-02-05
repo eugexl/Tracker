@@ -10,21 +10,21 @@ import CoreData
 
 final class TrackerStore: NSObject {
     
-    private weak var dataProvider: DataProvider?
+    private weak var viewModel: TrackerViewModelProtocol?
     private let viewContext: NSManagedObjectContext
     
     var recordStore: TrackerRecordStore?
     
-    convenience init(dataProvider: DataProvider) {
+    convenience init(viewModel: TrackerViewModel) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
             fatalError("Возникла ошибка при инициализации AppDelegate")
         }
-        self.init(viewContext: appDelegate.persistentContainer.viewContext, provider: dataProvider)
+        self.init(viewContext: appDelegate.persistentContainer.viewContext, viewModel: viewModel)
     }
     
-    init(viewContext: NSManagedObjectContext, provider: DataProvider) {
+    init(viewContext: NSManagedObjectContext, viewModel: TrackerViewModel) {
         self.viewContext = viewContext
-        self.dataProvider = provider
+        self.viewModel = viewModel
     }
     
     func getTracker(with id: UUID) -> TrackerCoreData? {
@@ -65,7 +65,7 @@ final class TrackerStore: NSObject {
     }
     
     func transformTrackerCoreData(from trackerEntity: TrackerCoreData) -> Tracker? {
-        guard let filterDay = dataProvider?.filterDay, let scheduleDay = TrackerSchedule(rawValue: filterDay), let filterName = dataProvider?.filterName else {
+        guard let filterDay = viewModel?.filterDate.weekDay, let scheduleDay = TrackerSchedule(rawValue: filterDay), let filterName = viewModel?.filterName else {
             return nil
         }
         guard let id = trackerEntity.trackerId,

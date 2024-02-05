@@ -16,7 +16,7 @@ final class TrackerScheduleViewController: UIViewController {
     private let cellItemValue: [TrackerSchedule] = [
         .monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday]
     
-    var delegate: TrackerCreationViewController?
+    weak var delegate: TrackerCreationViewController?
     
     private let buttonDone = {
         let button = UIButton()

@@ -11,22 +11,23 @@ final class TrackerCell: UICollectionViewCell {
     
     static let reuseIdentifier: String = "TrackerCell"
     
-    var days: Int = 0 {
+    lazy var days: Int = 0 {
         didSet {
             updateQuantityLabel()
         }
     }
     
-    var completed: Bool = false {
+    lazy var completed: Bool = false {
         didSet {
             updateCompleteTrackerButton()
         }
     }
     
-    var presenter: TrackersPresenterProtocol?
+    var viewModel: TrackerViewModelProtocol?
+    
     var trackerId: UUID?
     
-    private let buttonCompleteTracker: UIButton = {
+    private lazy var buttonCompleteTracker: UIButton = {
         let button = UIButton()
         button.tintColor = .white
         button.layer.cornerRadius = 17.0
@@ -34,20 +35,20 @@ final class TrackerCell: UICollectionViewCell {
         return button
     }()
     
-    private let labelEmojiIcon: UILabel = {
+    private lazy var labelEmojiIcon: UILabel = {
         let textView = UILabel()
         textView.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         textView.textAlignment = .center
         return textView
     }()
     
-    private let labelQuantity: UILabel = {
+    private lazy var labelQuantity: UILabel = {
         let text = UILabel()
         text.font = UIFont.systemFont(ofSize: 12, weight: .medium)
         return text
     }()
     
-    private let textViewTrackerText: UITextView = {
+    private lazy var textViewTrackerText: UITextView = {
         let text = UITextView()
         text.font = UIFont.systemFont(ofSize: 12.0)
         text.textContainerInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
@@ -58,20 +59,20 @@ final class TrackerCell: UICollectionViewCell {
         return text
     }()
     
-    private let viewBottom: UIView = {
+    private lazy var viewBottom: UIView = {
         let bottomView = UIView()
         bottomView.backgroundColor = .white
         return bottomView
     }()
     
-    private let viewEmojiContainer: UIView = {
+    private lazy var viewEmojiContainer: UIView = {
         let emojiView = UIView()
         emojiView.layer.cornerRadius = 12.0
         emojiView.backgroundColor = UIColor(named: ColorNames.emojiContainer)
         return emojiView
     }()
     
-    private let viewTop: UIView = {
+    private lazy var viewTop: UIView = {
         let topView = UIView()
         topView.layer.cornerRadius = 16.0
         topView.backgroundColor = .orange
@@ -92,10 +93,10 @@ final class TrackerCell: UICollectionViewCell {
     @objc
     private func buttonCompleteTrackerTapped(){
         
-        guard let presenter = presenter, let trackerId = trackerId else {
+        guard let viewModel = viewModel, let trackerId = trackerId else {
             return
         }
-        presenter.completeTracker(with: trackerId, indeed: !completed)
+        viewModel.completeTracker(with: trackerId, indeed: !completed)
     }
     
     private func setUpUI(){

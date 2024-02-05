@@ -17,4 +17,10 @@ extension Date {
             return calender.date(from: dateComponents)
         }
     }
+    
+    var weekDay: Int? {
+        get {
+            return Calendar.current.dateComponents([.weekday], from: self).weekday
+        }
+    }
 }

@@ -9,7 +9,7 @@ import UIKit
 
 public protocol AlertPresenterProtocol {
     
-    func presentAlert(title: String?, message: String?, actions: [UIAlertAction]?, target: UIViewController)
+    func presentAlert(title: String?, message: String?, actions: [UIAlertAction]?, target: UIViewController?)
 }
 
 final class AlertPresenter: AlertPresenterProtocol {
@@ -24,7 +24,7 @@ final class AlertPresenter: AlertPresenterProtocol {
     ///     - message: Сообщение уведомления
     ///     - actions: Действия (кнопки), предлагаемые в уведомлении
     ///     - target: UIViewController на котором будет отображено уведомление
-    func presentAlert(title: String?, message: String?, actions: [UIAlertAction]?, target: UIViewController) {
+    func presentAlert(title: String?, message: String?, actions: [UIAlertAction]?, target: UIViewController?) { 
         
         let alert = UIAlertController(title: title ?? "", message: message ?? "", preferredStyle: .alert)
         
@@ -32,6 +32,6 @@ final class AlertPresenter: AlertPresenterProtocol {
             alert.addAction($0)
         }
         
-        target.present(alert, animated: true)
+        target?.present(alert, animated: true)
     }
 }

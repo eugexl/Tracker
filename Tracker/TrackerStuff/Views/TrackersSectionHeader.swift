@@ -9,9 +9,9 @@ import UIKit
 
 final class TrackersSectionHeader: UICollectionReusableView {
     
-    static var reuseIdentifier = "TrackersSectionHeader"
+    static let reuseIdentifier = "TrackersSectionHeader"
     
-    private var headerLabel: UILabel = {
+    private lazy var headerLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 19.0, weight: .bold)
         return label

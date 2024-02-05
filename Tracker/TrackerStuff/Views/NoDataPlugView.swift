@@ -7,18 +7,21 @@
 
 import UIKit
 
-final class TrackersCollectionPlugView: UIView {
+final class NoDataPlugView: UIView {
     
     
-    private let plugImage: UIImageView = UIImageView(image: UIImage(named: "PlugImage"))
-    private let label: UILabel = {
+    private lazy var plugImage: UIImageView = UIImageView(image: UIImage(named: "PlugImage"))
+    
+    private lazy var label: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 10, weight: .medium)
-        label.text = "Что будем отслеживать?"
+        label.lineBreakMode = .byWordWrapping
+        label.numberOfLines = 0
+        label.textAlignment = .center
         return label
     }()
     
-    override init(frame: CGRect) {
+    init(frame: CGRect, labelText: String) {
         super.init(frame: frame)
         [ plugImage,
           label
@@ -26,6 +29,9 @@ final class TrackersCollectionPlugView: UIView {
             $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
         }
+        
+        label.text = labelText
+        label.setLineSpacing(lineSpacing: 5)
         
         NSLayoutConstraint.activate([
             plugImage.centerXAnchor.constraint(equalTo: self.centerXAnchor),
