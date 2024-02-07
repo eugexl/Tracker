@@ -13,5 +13,6 @@ struct Tracker {
     let name: String
     let color: String
     let emoji: String
+    let pinned: Bool
     let schedule: Set<TrackerSchedule>
 }

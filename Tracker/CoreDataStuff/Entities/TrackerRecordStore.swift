@@ -97,7 +97,7 @@ final class TrackerRecordStore: NSObject {
             do{
                 try viewContext.save()
             } catch {
-                throw CDErrors.cannotSaveContext
+                throw CDErrors.couldntSaveContext
             }
         }
     }

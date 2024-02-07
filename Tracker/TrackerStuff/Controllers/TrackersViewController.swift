@@ -112,27 +112,11 @@ final class TrackersViewController: UIViewController {
     private func setupBindings(){
         viewModel.updateCell = collectionView.reloadItems
         viewModel.updateTrackersData = collectionView.reloadData
-        viewModel.warnFutureCompletion = { [weak self] in
+        viewModel.warnCoreDataFailure = { [weak self] (title, message) in
             guard let self = self else { return }
-            let action = UIAlertAction(title: "Понятно", style: .cancel)
-            AlertPresenter.shared.presentAlert(title: "Так не пойдёт!",
-                                               message: "Нельзя отмечать карточку для будущей даты",
-                                               actions: [action],
-                                               target: self)
-        }
-        viewModel.warnSaveRecordFailure = { [weak self] in
-            guard let self = self else { return }
-            let action = UIAlertAction(title: "Жаль", style: .cancel)
+            let action = UIAlertAction(title: title, style: .cancel)
             AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
-                                               message: "К сожалению не удалось отметить статус выполнения трекера :(",
-                                               actions: [action],
-                                               target: self)
-        }
-        viewModel.warnSaveTrackerFailure = { [weak self] in
-            guard let self = self else { return }
-            let action = UIAlertAction(title: "Жаль", style: .cancel)
-            AlertPresenter.shared.presentAlert(title: "Ой-ой-ой ...",
-                                               message: "К сожалению возникла ошибка при сохранении трекера :(",
+                                               message: message,
                                                actions: [action],
                                                target: self)
         }
@@ -185,7 +169,53 @@ extension TrackersViewController: TrackerCreationProtocol {
 }
 
 extension TrackersViewController: UICollectionViewDelegate {
-    // TODO: Необходимо доделать пункты контекстного меню
+    
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfiguration configuration: UIContextMenuConfiguration, highlightPreviewForItemAt indexPath: IndexPath) -> UITargetedPreview? {
+        guard let cell = collectionView.cellForItem(at: indexPath) as? TrackerCell else { return nil }
+        return UITargetedPreview(view: cell.viewTop)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemsAt indexPaths: [IndexPath], point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        guard indexPaths.count > 0 else { return nil }
+        
+        let indexPath = indexPaths[0]
+        
+        guard let cell = collectionView.cellForItem(at: indexPath) as? TrackerCell,
+              let trackerId = cell.trackerId,
+              let trackerType = cell.trackerType,
+              let pinned = cell.pinned
+        else { return nil }
+        
+        let pinTitle = pinned ? "Открепить" : "Закрепить"
+        
+        return UIContextMenuConfiguration( actionProvider: { actions in
+            
+            return UIMenu(children: [
+                
+                UIAction(title: pinTitle) { [weak self] _ in
+                    guard let self = self else { return }
+                    self.viewModel.toggleTrackerPin(with: trackerId)
+                },
+                
+                UIAction(title: "Редактировать") { [weak self] _ in
+                    guard let self = self else { return }
+                    let categoryTitle = self.viewModel.getCategoryOfTracker(with: trackerId)
+                    
+                    let newTrackerVC = TrackerCreationViewController(viewModel: self.viewModel, type: trackerType, controllerType: .edit)
+                    newTrackerVC.modalPresentationStyle = .popover
+                    newTrackerVC.fillInfoOfTracker(with: trackerId, and: categoryTitle, done: cell.days)
+                    self.present(newTrackerVC, animated: true)
+                },
+                
+                UIAction(title: "Удалить", attributes: .destructive) { [weak self] _ in
+                    guard let self = self else { return }
+                    self.viewModel.deleteTracker(with: trackerId)
+                }
+            ])
+        })
+        
+    }
 }
 
 extension TrackersViewController: UICollectionViewDataSource {
@@ -235,6 +265,7 @@ extension TrackersViewController: UICollectionViewDataSource {
         
         cell.days = completeDays
         cell.completed = complete
+        cell.pinned = tracker.pinned
         
         cell.setUpTrackerInfo(with: tracker)
         
@@ -254,7 +285,7 @@ extension TrackersViewController: UICollectionViewDataSource {
                                                                          withReuseIdentifier: reuseIdentifier,
                                                                          for: indexPath) as? TrackersSectionHeader ?? TrackersSectionHeader()
         
-        let headerText = viewModel.category(at: indexPath).title ?? ""
+        let headerText = viewModel.categoryTitle(for: indexPath.section)
         headerView.setHeader(with: headerText)
         
         return headerView

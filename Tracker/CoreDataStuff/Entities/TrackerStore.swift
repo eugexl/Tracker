@@ -27,13 +27,46 @@ final class TrackerStore: NSObject {
         self.viewModel = viewModel
     }
     
-    func getTracker(with id: UUID) -> TrackerCoreData? {
-        let request = TrackerCoreData.fetchRequest()
+    func deleteTracker(with trackerId: UUID) throws {
+        
+        guard let tracker = getTracker(with: trackerId) else {
+            throw CDErrors.couldntDeleteTracker
+        }
+        
+        viewContext.delete(tracker)
+        try saveContext()
+    }
+    
+    func getCategoryOfTracker(with trackerId: UUID) -> String? {
+        
+        guard let tracker = getTracker(with: trackerId) else { return nil }
+        return tracker.category?.title
+    }
+    
+    func getTracker(with trackerId: UUID) -> TrackerCoreData? {
+        let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
         request.returnsObjectsAsFaults = false
         request.predicate = NSPredicate(format: "%K = %@",
-                                        #keyPath(TrackerCoreData.trackerId), id as CVarArg)
+                                        #keyPath(TrackerCoreData.trackerId), trackerId as CVarArg)
         let tracker = try? viewContext.fetch(request).first
         return tracker
+    }
+    
+    func toggleTrackerPin(with trackerId: UUID, completingHandler: @escaping (Result<Void,Error>) -> Void ) {
+        
+        guard let tracker = getTracker(with: trackerId) else {
+            completingHandler(.failure(CDErrors.noTrackerFound))
+            return
+        }
+        
+        tracker.pinned = !tracker.pinned
+        
+        do {
+            try saveContext()
+            completingHandler(.success(()))
+        } catch {
+            completingHandler(.failure(CDErrors.couldntSaveContext))
+        }
     }
     
     func save(tracker: Tracker, to categoryItem: TrackerCategoryCoreData) throws {
@@ -47,19 +80,16 @@ final class TrackerStore: NSObject {
         
         categoryItem.addToTrackers(trackerEntity)
         
-        do {
-            try saveContext()
-        } catch {
-            throw error
-        }
+        try saveContext()
     }
     
     private func saveContext() throws {
+        
         if viewContext.hasChanges {
             do {
                 try viewContext.save()
             } catch {
-                throw error
+                throw CDErrors.couldntSaveContext
             }
         }
     }
@@ -70,17 +100,37 @@ final class TrackerStore: NSObject {
         }
         guard let id = trackerEntity.trackerId,
               let name = trackerEntity.name,
-              let emoji = trackerEntity.emoji,
               let color = trackerEntity.color,
+              let emoji = trackerEntity.emoji,
               let schedule = trackerEntity.schedule as? Set<TrackerSchedule> else {
             return nil
         }
+        
+        let pinned = trackerEntity.pinned
+        
         if (schedule.isEmpty || schedule.contains(scheduleDay)) &&
             (filterName.count > 0 && name.contains(filterName) ||  filterName.count == 0) {
             
-            return Tracker(id: id, name: name, color: color, emoji: emoji, schedule: schedule)
+            return Tracker(id: id, name: name, color: color, emoji: emoji, pinned: pinned, schedule: schedule)
         } else {
             return nil
         }
+    }
+    
+    func update(tracker: Tracker, to categoryItem: TrackerCategoryCoreData) throws {
+        
+        guard let trackerEntity =  getTracker(with: tracker.id) else {
+            throw CDErrors.noTrackerFound
+        }
+        
+        trackerEntity.name = tracker.name
+        trackerEntity.color = tracker.color
+        trackerEntity.emoji = tracker.emoji
+        trackerEntity.schedule = tracker.schedule as NSObject
+        trackerEntity.category = categoryItem
+        
+        categoryItem.addToTrackers(trackerEntity)
+        
+        try saveContext()
     }
 }
