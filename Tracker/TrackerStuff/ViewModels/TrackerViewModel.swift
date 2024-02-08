@@ -8,8 +8,8 @@
 import Foundation
 
 protocol TrackerViewModelProtocol: AnyObject {
-    var filterDate: Date { get }
-    var filterName: String { get }
+    var filterByDate: Date { get }
+    var filterByName: String { get }
     var updateCell: ((_ at: [IndexPath]) -> Void)? { get set }
     var updateTrackersData: (() -> Void)? { get set }
     var updateCategoriesData: (() -> Void)? { get set }
@@ -19,7 +19,7 @@ protocol TrackerViewModelProtocol: AnyObject {
     func categoryTitle(for row: Int) -> String
     func categoryTitleFromTotalList(for row: Int) -> String
     func completeTracker(with id: UUID, indeed: Bool)
-    func completeTrackerState(for trackerId: UUID, at date: Date) -> (Int, Bool)
+    func completeTrackerState(for trackerId: UUID, at date: Date) -> (daysNum: Int, state: Bool)
     func createCategory(titledWith title: String)
     func deleteTracker(with trackerId: UUID)
     func deleteCategory(titledWith title: String)
@@ -32,7 +32,7 @@ protocol TrackerViewModelProtocol: AnyObject {
     func save(tracker: Tracker, to categoryWithTitle: String)
     func toggleTrackerPin(with trackerId: UUID)
     func update(tracker: Tracker, to categoryWithTitle: String)
-    func updateCategoriesData(with date: Date?, and searchfilter: String?)
+    func updateCategoriesData(withDate date: Date?, andName searchfilter: String?, andFilter: TrackersFilter?)
     func updateCategory(fromOld previousTitle: String, toNew title: String)
     func updateCompletedTrackersData()
 }
@@ -45,27 +45,24 @@ final class TrackerViewModel {
     
     private var categories: [TrackerCategory] = [TrackerCategory]() {
         didSet {
-            // FIXME: REMOVE DEBUG PRINTS ...
-            print("UPDATED CATEGORIES (\(categories.count)):")
-            print(categories)
-            
             self.updateTrackersData?()
         }
     }
     
     private var categoriesTitleList: [String] = [String](){
         didSet{
-            // FIXME: REMOVE DEBUG PRINTS ...
-            print("UPDATED CATEGORIES TITLES (\(categoriesTitleList.count)):")
-            print(categoriesTitleList)
-            
             self.updateCategoriesData?()
         }
     }
     private var completedTrackers: [TrackerRecord] = [TrackerRecord]()
     
-    var filterDate: Date = Date()
-    var filterName: String = ""
+    var filterByDate: Date = Date()
+    var filterByName: String = ""
+    var trackersFilter: TrackersFilter = .allTrackers {
+        didSet {
+            TrackersFilter.currentTrackersFilter = trackersFilter
+        }
+    }
     
     var updateCell: ((_ at: [IndexPath]) -> Void)?
     var updateCategoriesData: (() -> Void)?
@@ -74,8 +71,21 @@ final class TrackerViewModel {
     
     init(){
         trackerStore.recordStore = recordStore
-        updateCategoriesData(with: filterDate, and: nil)
         updateCompletedTrackersData()
+        updateCategoriesData(withDate: filterByDate, andName: nil, andFilter: .allTrackers)
+    }
+    
+    private func filterStateOfTracker(with trackerId: UUID) -> Bool {
+        let trackerStateAtDate = completeTrackerState(for: trackerId, at: filterByDate)
+        
+        switch trackersFilter {
+        case .completedTrackers:
+            return trackerStateAtDate.state
+        case .incompletedTrackers:
+            return !trackerStateAtDate.state
+        default:
+            return true
+        }
     }
 }
 
@@ -96,11 +106,11 @@ extension TrackerViewModel: TrackerViewModelProtocol {
     }
     
     func completeTracker(with trackerId: UUID, indeed: Bool){
-        guard let date = filterDate.woTime else {
+        guard let date = filterByDate.woTime else {
             return
         }
         
-        if filterDate > Date() {
+        if filterByDate > Date() {
             self.warnCoreDataFailure?("Понятно", "Нельзя отмечать карточку для будущей даты")
             return
         }
@@ -125,7 +135,7 @@ extension TrackerViewModel: TrackerViewModelProtocol {
         }
     }
     
-    func completeTrackerState(for trackerId: UUID, at date: Date) -> (Int, Bool) {
+    func completeTrackerState(for trackerId: UUID, at date: Date) -> (daysNum: Int, state: Bool) {
         
         var completedDays: Int = 0
         var complete: Bool = false
@@ -144,7 +154,7 @@ extension TrackerViewModel: TrackerViewModelProtocol {
     func createCategory(titledWith title: String) {
         
         categoryStore.create(with: title)
-        updateCategoriesData(with: filterDate, and: filterName)
+        updateCategoriesData(withDate: filterByDate, andName: filterByName, andFilter: nil)
     }
     
     func deleteCategory(titledWith title: String) {
@@ -155,7 +165,7 @@ extension TrackerViewModel: TrackerViewModelProtocol {
     func deleteTracker(with trackerId: UUID){
         do {
             try trackerStore.deleteTracker(with: trackerId)
-            updateCategoriesData(with: filterDate, and: filterName)
+            updateCategoriesData(withDate: filterByDate, andName: filterByName, andFilter: nil)
         } catch {
             DispatchQueue.main.async {
                 self.warnCoreDataFailure?("Жаль", "К сожалению, нам не удалось удалить трекер :(")
@@ -216,7 +226,7 @@ extension TrackerViewModel: TrackerViewModelProtocol {
         
         do {
             try trackerStore.save(tracker: tracker, to: categoryEntity)
-            updateCategoriesData(with: filterDate, and: filterName)
+            updateCategoriesData(withDate: filterByDate, andName: filterByName, andFilter: nil)
         } catch {
             DispatchQueue.main.async {
                 self.warnCoreDataFailure?("Жаль", "К сожалению, возникла ошибка при сохранении трекера :(")
@@ -230,7 +240,7 @@ extension TrackerViewModel: TrackerViewModelProtocol {
             guard let self = self else { return }
             switch result {
             case .success( _ ):
-                self.updateCategoriesData(with: nil, and: nil)
+                self.updateCategoriesData(withDate: nil, andName: nil, andFilter: nil)
             case .failure( _ ):
                 self.warnCoreDataFailure?("Жаль","К сожалению, не удалось закрепить/открепить трекер :(")
             }
@@ -243,7 +253,7 @@ extension TrackerViewModel: TrackerViewModelProtocol {
         
         do {
             try trackerStore.update(tracker: tracker, to: categoryEntity)
-            updateCategoriesData(with: filterDate, and: filterName)
+            updateCategoriesData(withDate: filterByDate, andName: filterByName, andFilter: nil)
         } catch {
             DispatchQueue.main.async {
                 self.warnCoreDataFailure?("Жаль", "К сожалению возникла ошибка при обновлении трекера :(")
@@ -256,13 +266,16 @@ extension TrackerViewModel: TrackerViewModelProtocol {
         categoryStore.updateCategory(fromOld: previousTitle, toNew: title)
     }
     
-    func updateCategoriesData(with date: Date?, and searchFilter: String? ) {
+    func updateCategoriesData(withDate date: Date?, andName searchFilter: String?, andFilter: TrackersFilter?) {
         
         if let date = date {
-            filterDate = date
+            filterByDate = date
         }
         if let searchFilter = searchFilter {
-            filterName = searchFilter
+            filterByName = searchFilter
+        }
+        if let filter = andFilter {
+            trackersFilter = filter
         }
         
         if let categories = categoryStore.getTrackerCategories() {
@@ -280,9 +293,8 @@ extension TrackerViewModel: TrackerViewModelProtocol {
             
             categories.forEach { category in
                 
-                pinnedTrackers.append(contentsOf: category.trackers.filter{ $0.pinned == true })
-                
-                let unpinnedTrackers = category.trackers.filter{ $0.pinned == false }
+                pinnedTrackers.append(contentsOf: category.trackers.filter{ $0.pinned == true && filterStateOfTracker(with: $0.id)})
+                let unpinnedTrackers = category.trackers.filter{ $0.pinned == false && filterStateOfTracker(with: $0.id)}
                 
                 if !unpinnedTrackers.isEmpty {
                     newCategoriesList.append(TrackerCategory(title: category.title, trackers: unpinnedTrackers))

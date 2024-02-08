@@ -95,7 +95,7 @@ final class TrackerStore: NSObject {
     }
     
     func transformTrackerCoreData(from trackerEntity: TrackerCoreData) -> Tracker? {
-        guard let filterDay = viewModel?.filterDate.weekDay, let scheduleDay = TrackerSchedule(rawValue: filterDay), let filterName = viewModel?.filterName else {
+        guard let filterDay = viewModel?.filterByDate.weekDay, let scheduleDay = TrackerSchedule(rawValue: filterDay), let filterName = viewModel?.filterByName else {
             return nil
         }
         guard let id = trackerEntity.trackerId,

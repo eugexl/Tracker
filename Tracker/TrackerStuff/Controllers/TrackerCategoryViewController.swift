@@ -153,7 +153,7 @@ extension TrackerCategoryViewController: UITableViewDataSource {
             if let plugView = tableView.backgroundView as? NoDataPlugView {
                 plugView.fadeIn()
             } else {
-                tableView.backgroundView = NoDataPlugView(frame: tableView.bounds, labelText: "Привычки и события можно\nобъединить по смыслу")
+                tableView.backgroundView = NoDataPlugView(frame: tableView.bounds, plugMode: .noCategories)
             }
         } else {
             if let plugView = tableView.backgroundView as? NoDataPlugView {

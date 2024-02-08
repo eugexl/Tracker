@@ -7,32 +7,59 @@
 
 import UIKit
 
-protocol TrackersViewControllerProtocol: AnyObject {
+protocol TrackersFilterProtocol: AnyObject {
     
-    var currentDate: Date { get }
-    var searchTrackerName: String? { get }
-    func newTrackerViewControllerPresenting(type: TrackerType)
+    func setTrackersFilter(to filter: TrackersFilter)
 }
 
 protocol TrackerCreationProtocol: AnyObject {
     func newTrackerViewControllerPresenting(type: TrackerType)
 }
 
-final class TrackersViewController: UIViewController {
+final class TrackersViewController: UIViewController, TrackersFilterProtocol {
     
     var currentDate: Date = Date() {
         didSet {
-            viewModel.updateCategoriesData(with: currentDate, and: searchTrackerName)
+            viewModel.updateCategoriesData(withDate: currentDate, andName: searchTrackerName, andFilter: trackersFilter)
         }
     }
     
     var searchTrackerName: String? {
         didSet {
-            viewModel.updateCategoriesData(with: currentDate, and: searchTrackerName)
+            viewModel.updateCategoriesData(withDate: currentDate, andName: searchTrackerName, andFilter: trackersFilter)
         }
     }
     
+    private var trackersFilter: TrackersFilter?
+    
+    func setTrackersFilter(to filter: TrackersFilter){
+        
+        trackersFilter = filter
+        
+        if filter == .todayTrackers {
+            datePicker.date = Date()
+            currentDate = datePicker.date
+        } else {
+            viewModel.updateCategoriesData(withDate: currentDate, andName: searchTrackerName, andFilter: trackersFilter)
+        }
+    }
+    
+    // Переменная для определения момента (когда создаётся последняя ячейка collectionView )
+    // выяснения высоты содержимого collectionView, с целью добавления Inset-а содержимому
+    // collectionView, что бы избежать пересечения с кнопкой "Фильтры"
+    private var lastCellIndexPath: IndexPath = IndexPath(row: 0, section: 0)
+    
     private var viewModel: TrackerViewModelProtocol
+    
+    private lazy var buttonFilters: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setTitle("Фильтры", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .regular)
+        button.tintColor = .white
+        button.backgroundColor = UIColor(red: 55/255, green: 114/255, blue: 231/255, alpha: 1)
+        button.layer.cornerRadius = 16
+        return button
+    }()
     
     private lazy var collectionView: UICollectionView = {
         
@@ -92,7 +119,20 @@ final class TrackersViewController: UIViewController {
     @objc
     private func dateSelected(){
         
+        trackersFilter = .allTrackers
         currentDate = datePicker.date
+    }
+    
+    private func buttonFiltersIs(hidden: Bool) {
+        
+        buttonFilters.isHidden = hidden
+    }
+    
+    @objc
+    private func buttonFiltersTapped(){
+        let trackersFilterVC = TrackersFilterViewController(delegate: self)
+        trackersFilterVC.modalPresentationStyle = .popover
+        present(trackersFilterVC, animated: true)
     }
     
     @objc
@@ -135,10 +175,11 @@ final class TrackersViewController: UIViewController {
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: datePicker)
         
-        [collectionView, labelTitle, searchTextField].forEach {
+        [collectionView, labelTitle, searchTextField, buttonFilters].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
+        
         NSLayoutConstraint.activate([
             datePicker.widthAnchor.constraint(equalToConstant: 96),
             
@@ -152,10 +193,17 @@ final class TrackersViewController: UIViewController {
             collectionView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 10),
             collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            buttonFilters.heightAnchor.constraint(equalToConstant: 50),
+            buttonFilters.widthAnchor.constraint(equalToConstant: 114),
+            buttonFilters.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            buttonFilters.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            
         ])
+        
         datePicker.addTarget(self, action: #selector(dateSelected), for: .valueChanged)
         searchTextField.addTarget(self, action: #selector(searchTextEdited), for: .editingChanged)
+        buttonFilters.addTarget(self, action: #selector(buttonFiltersTapped), for: .touchUpInside)
     }
 }
 
@@ -210,11 +258,18 @@ extension TrackersViewController: UICollectionViewDelegate {
                 
                 UIAction(title: "Удалить", attributes: .destructive) { [weak self] _ in
                     guard let self = self else { return }
-                    self.viewModel.deleteTracker(with: trackerId)
+                    let actionCancel = UIAlertAction(title: "Отменить", style: .cancel)
+                    let actionDelete = UIAlertAction(title: "Удалить", style: .destructive) { _ in
+                        self.viewModel.deleteTracker(with: trackerId)
+                    }
+                    AlertPresenter.shared.presentAlert(title: "",
+                                                       message: "Уверены что хотите удалить трекер?",
+                                                       actions: [actionCancel, actionDelete],
+                                                       target: self,
+                                                       preferredStyle: .actionSheet)
                 }
             ])
         })
-        
     }
 }
 
@@ -223,29 +278,44 @@ extension TrackersViewController: UICollectionViewDataSource {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         
         let categoriesNumber = viewModel.numberOfCategories()
+        let searchByText = !(searchTextField.text?.isEmpty ?? true)
         
         if categoriesNumber == 0 {
             
+            let plugMode: NoDataPlugView.PlugMode = searchByText ? .noTrackersFound : .noTrackers
+            buttonFiltersIs(hidden: searchByText)
+            
             if let plugView = collectionView.backgroundView as? NoDataPlugView {
+                
+                if plugView.plugMode != plugMode {
+                    plugView.setMode(to: plugMode)
+                }
                 
                 plugView.fadeIn()
             } else {
                 
-                collectionView.backgroundView = NoDataPlugView(frame: collectionView.bounds, labelText: "Что будем отслеживать?")
+                collectionView.backgroundView = NoDataPlugView(frame: collectionView.bounds, plugMode: plugMode)
             }
+            
         } else {
             
             if let plugView = collectionView.backgroundView as? NoDataPlugView {
                 
                 plugView.fadeOut()
             }
+            
+            buttonFiltersIs(hidden: false)
         }
         
         return categoriesNumber
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return viewModel.numberOfItems(in: section)
+        
+        let numberOfItems = viewModel.numberOfItems(in: section)
+        lastCellIndexPath = IndexPath(row: numberOfItems - 1, section: section)
+        
+        return  numberOfItems
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -268,6 +338,14 @@ extension TrackersViewController: UICollectionViewDataSource {
         cell.pinned = tracker.pinned
         
         cell.setUpTrackerInfo(with: tracker)
+        
+        if indexPath == lastCellIndexPath {
+            
+            // Добавляем Нижний Инсет в collectionView для предотвращения пересечения ячеек с кнопкой "Фильтры"
+            if collectionView.contentSize.height - collectionView.visibleSize.height > 70 {
+                collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 70, right: 0)
+            }
+        }
         
         return cell
     }
@@ -293,6 +371,7 @@ extension TrackersViewController: UICollectionViewDataSource {
 }
 
 extension TrackersViewController: UICollectionViewDelegateFlowLayout {
+    
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         
@@ -328,6 +407,7 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
                                                   withHorizontalFittingPriority: .required,
                                                   verticalFittingPriority: .fittingSizeLevel)
     }
+    
 }
 
 extension TrackersViewController: UITextFieldDelegate {

@@ -367,11 +367,7 @@ final class TrackerCreationViewController: UIViewController {
     func fillInfoOfTracker(with trackerId: UUID, and category: String, done days: Int){
         
         guard let tracker = viewModel.getTracker(with: trackerId) else {
-            // TODO: Придумать обратичик ошибки с отсутствием данных ...
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("Отсутствуют данные для редактируемого трекера")
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            return
+            fatalError("Не получили информацию о трекере!")
         }
         
         self.trackerId = tracker.id
@@ -444,10 +440,7 @@ extension TrackerCreationViewController: UITableViewDataSource {
         cell.detailTextLabel?.textColor = UIColor(named: ColorNames.gray)
         cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 15.0)
         
-        
-        // TODO: В следующей версии переделать trackerCategory в опционал
-        // if (indexPath.row == 0 && trackerCategory != nil){
-        if (indexPath.row == 0 && trackerCategory.count > 0){
+        if (indexPath.row == 0 && !trackerCategory.isEmpty){
             
             cell.detailTextLabel?.text = trackerCategory
         } else if (indexPath.row == 1 && !trackerSchedule.isEmpty) {

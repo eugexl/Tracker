@@ -115,7 +115,7 @@ final class TrackerCategoryStore: NSObject  {
 extension TrackerCategoryStore: NSFetchedResultsControllerDelegate {
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         try? controller.performFetch()
-        viewModel?.updateCategoriesData(with: nil, and: nil)
+        viewModel?.updateCategoriesData(withDate: nil, andName: nil, andFilter: nil)
     }
     
 }

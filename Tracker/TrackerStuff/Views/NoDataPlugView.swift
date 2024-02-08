@@ -9,8 +9,13 @@ import UIKit
 
 final class NoDataPlugView: UIView {
     
+    enum PlugMode {
+        case noCategories
+        case noTrackers
+        case noTrackersFound
+    }
     
-    private lazy var plugImage: UIImageView = UIImageView(image: UIImage(named: "PlugImage"))
+    private lazy var plugImage: UIImageView = UIImageView()
     
     private lazy var label: UILabel = {
         let label = UILabel()
@@ -21,16 +26,21 @@ final class NoDataPlugView: UIView {
         return label
     }()
     
-    init(frame: CGRect, labelText: String) {
+    var plugMode: PlugMode?
+    
+    init(frame: CGRect, plugMode: NoDataPlugView.PlugMode) {
+        
         super.init(frame: frame)
+        
+        setMode(to: plugMode)
+        
         [ plugImage,
           label
         ].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
         }
-        
-        label.text = labelText
+    
         label.setLineSpacing(lineSpacing: 5)
         
         NSLayoutConstraint.activate([
@@ -60,5 +70,24 @@ final class NoDataPlugView: UIView {
         UIView.animate(withDuration: 0.3) {
             self.alpha = 0
         }
+    }
+    
+    func setMode(to mode: PlugMode) {
+        
+        var labelText: String = ""
+        
+        switch mode {
+        case .noCategories:
+            labelText = "Привычки и события можно\nобъединить по смыслу"
+            plugImage.image = UIImage(named: "PlugImage")
+        case .noTrackers:
+            labelText = "Что будем отслеживать?"
+            plugImage.image = UIImage(named: "PlugImage")
+        case .noTrackersFound:
+            labelText = "Ничего не найдено"
+            plugImage.image = UIImage(named: "PlugImageSearchMode")
+        }
+        
+        label.text = labelText
     }
 }
