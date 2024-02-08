@@ -119,7 +119,9 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
     @objc
     private func dateSelected(){
         
-        trackersFilter = .allTrackers
+        if trackersFilter == .todayTrackers {
+            trackersFilter = .allTrackers
+        }
         currentDate = datePicker.date
     }
     
