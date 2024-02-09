@@ -17,6 +17,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.setTitle("Привычка", for: .normal)
         button.backgroundColor = UIColor(named: ColorNames.black)
+        button.setTitleColor(UIColor(named: ColorNames.white), for: .normal)
         return button
     }()
     
@@ -26,12 +27,14 @@ final class TrackerTypeSelectionViewController: UIViewController {
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.setTitle("Нерегулярные события", for: .normal)
         button.backgroundColor = UIColor(named: ColorNames.black)
+        button.setTitleColor(UIColor(named: ColorNames.white), for: .normal)
         return button
     }()
     
     private lazy var titleLabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textColor = UIColor(named: ColorNames.black)
         label.text = "Создание трекера"
         return label
     }()
@@ -70,7 +73,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
     
     private func setUpUI(){
         
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(named: ColorNames.white)
         
         [buttonHabbit, buttonIrregularEvents, titleLabel].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false

@@ -86,6 +86,7 @@ final class TrackerCategoryViewController: UIViewController {
         ])
         
         tableView.separatorInset = UIEdgeInsets(top: 0, left: 16.0, bottom: 0, right: 16.0)
+        tableView.separatorColor = UIColor(named: ColorNames.gray)
         buttonAdd.addTarget(self, action: #selector(addNewCategory), for: .touchUpInside)
     }
     
@@ -129,7 +130,15 @@ extension TrackerCategoryViewController: UITableViewDelegate {
                 }),
                 UIAction(title: "Удалить", attributes: .destructive, handler: { [weak self] _ in
                     guard let self = self else { return }
-                    self.viewModel?.deleteCategory(titledWith: categoryTitle)
+                    let actionCancel = UIAlertAction(title: "Отменить", style: .cancel)
+                    let actionDelete = UIAlertAction(title: "Удалить", style: .destructive) { _ in
+                        self.viewModel?.deleteCategory(titledWith: categoryTitle)
+                    }
+                    AlertPresenter.shared.presentAlert(title: "",
+                                                       message: "Эта категория точно не нужна?",
+                                                       actions: [actionCancel, actionDelete],
+                                                       target: self,
+                                                       preferredStyle: .actionSheet)
                 })
             ])
         })

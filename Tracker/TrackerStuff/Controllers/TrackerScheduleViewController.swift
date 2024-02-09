@@ -61,7 +61,7 @@ final class TrackerScheduleViewController: UIViewController {
     
     private func setUpUI(){
         
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(named: ColorNames.white)
         
         [titleLabel, tableView, buttonDone].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -81,6 +81,7 @@ final class TrackerScheduleViewController: UIViewController {
         ])
         
         tableView.separatorInset = UIEdgeInsets(top: 0, left: 16.0, bottom: 0, right: 16.0)
+        tableView.separatorColor = UIColor(named: ColorNames.gray)
         
         buttonDone.addTarget(self, action: #selector(scheduleMade), for: .touchUpInside)
     }

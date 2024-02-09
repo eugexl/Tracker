@@ -39,6 +39,7 @@ final class TrackersFilterViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         setupUI()
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.open, item: AppMetricsItems.filter)
     }
     
     init(delegate: TrackersFilterProtocol){
@@ -70,6 +71,7 @@ final class TrackersFilterViewController: UIViewController {
         ])
         
         tableView.separatorInset = UIEdgeInsets(top: 0, left: 16.0, bottom: 0, right: 16.0)
+        tableView.separatorColor = UIColor(named: ColorNames.gray)
     }
 }
 
@@ -85,6 +87,7 @@ extension TrackersFilterViewController: UITableViewDelegate {
         delegate?.setTrackersFilter(to: filter)
         
         dismiss(animated: true)
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.close, item: AppMetricsItems.filter)
     }
 }
 

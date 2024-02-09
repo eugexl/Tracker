@@ -13,6 +13,7 @@ final class NoDataPlugView: UIView {
         case noCategories
         case noTrackers
         case noTrackersFound
+        case statistics
     }
     
     private lazy var plugImage: UIImageView = UIImageView()
@@ -28,9 +29,16 @@ final class NoDataPlugView: UIView {
     
     var plugMode: PlugMode?
     
-    init(frame: CGRect, plugMode: NoDataPlugView.PlugMode) {
+    init(frame: CGRect, plugMode: NoDataPlugView.PlugMode, displayedByDefault: Bool = true) {
         
         super.init(frame: frame)
+        
+        switch displayedByDefault {
+        case true:
+            alpha = 2
+        case false:
+            alpha = 0
+        }
         
         setMode(to: plugMode)
         
@@ -40,7 +48,7 @@ final class NoDataPlugView: UIView {
             $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
         }
-    
+        
         label.setLineSpacing(lineSpacing: 5)
         
         NSLayoutConstraint.activate([
@@ -49,15 +57,10 @@ final class NoDataPlugView: UIView {
             label.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             label.topAnchor.constraint(equalTo: plugImage.bottomAnchor, constant: 10.0)
         ])
-        alpha = 0.0
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-    }
-    
-    override func didMoveToSuperview() {
-        fadeIn()
     }
     
     func fadeIn(){
@@ -86,6 +89,9 @@ final class NoDataPlugView: UIView {
         case .noTrackersFound:
             labelText = "Ничего не найдено"
             plugImage.image = UIImage(named: "PlugImageSearchMode")
+        case .statistics:
+            labelText = "Анализировать пока нечего"
+            plugImage.image = UIImage(named: "PlugImageStatistics")
         }
         
         label.text = labelText

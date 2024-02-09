@@ -77,7 +77,12 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
         datePicker.translatesAutoresizingMaskIntoConstraints = false
         datePicker.preferredDatePickerStyle = .compact
         datePicker.datePickerMode = .date
+        datePicker.backgroundColor = UIColor(named: ColorNames.datePicker)
+        datePicker.layer.cornerRadius = 8
+        datePicker.layer.masksToBounds = true
         datePicker.locale = Locale(identifier: "ru_RU")
+        datePicker.setValue(UIColor.white, forKeyPath: "textColor")
+        datePicker.setValue(false, forKeyPath: "highlightsToday")
         return datePicker
     }()
     
@@ -103,7 +108,11 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
         collectionView.dataSource = self
         collectionView.delegate = self
         searchTextField.delegate = self
+        
+        
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.open, item: AppMetricsItems.filter)
     }
+    
     
     init(viewModel: TrackerViewModelProtocol){
         self.viewModel = viewModel
@@ -132,6 +141,7 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
     
     @objc
     private func buttonFiltersTapped(){
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.click, item: AppMetricsItems.filter)
         let trackersFilterVC = TrackersFilterViewController(delegate: self)
         trackersFilterVC.modalPresentationStyle = .popover
         present(trackersFilterVC, animated: true)
@@ -139,6 +149,8 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
     
     @objc
     private func newTrackerButtonTapped() {
+        
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.click, item: AppMetricsItems.add_track)
         
         let trackerTypeSelectionVC = TrackerTypeSelectionViewController(delegate: self)
         trackerTypeSelectionVC.modalPresentationStyle = .popover
@@ -166,14 +178,14 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
     
     private func setupUI () {
         
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(named: ColorNames.white)
         navigationController?.navigationBar.tintColor = .darkGray
-        navigationController?.navigationBar.barTintColor = .white
+        navigationController?.navigationBar.barTintColor = UIColor(named: ColorNames.white)
         navigationController?.navigationBar.shadowImage = UIImage()
         
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(newTrackerButtonTapped))
-        navigationItem.leftBarButtonItem?.tintColor = .black
+        navigationItem.leftBarButtonItem?.tintColor = UIColor(named: ColorNames.black)
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: datePicker)
         
@@ -183,7 +195,7 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
         }
         
         NSLayoutConstraint.activate([
-            datePicker.widthAnchor.constraint(equalToConstant: 96),
+            datePicker.widthAnchor.constraint(equalToConstant: 100),
             
             labelTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 90.0),
             labelTitle.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16.0),
@@ -250,8 +262,9 @@ extension TrackersViewController: UICollectionViewDelegate {
                 
                 UIAction(title: "Редактировать") { [weak self] _ in
                     guard let self = self else { return }
-                    let categoryTitle = self.viewModel.getCategoryOfTracker(with: trackerId)
+                    ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.click, item: AppMetricsItems.edit)
                     
+                    let categoryTitle = self.viewModel.getCategoryOfTracker(with: trackerId)
                     let newTrackerVC = TrackerCreationViewController(viewModel: self.viewModel, type: trackerType, controllerType: .edit)
                     newTrackerVC.modalPresentationStyle = .popover
                     newTrackerVC.fillInfoOfTracker(with: trackerId, and: categoryTitle, done: cell.days)
@@ -260,6 +273,8 @@ extension TrackersViewController: UICollectionViewDelegate {
                 
                 UIAction(title: "Удалить", attributes: .destructive) { [weak self] _ in
                     guard let self = self else { return }
+                    ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.click, item: AppMetricsItems.delete)
+                    
                     let actionCancel = UIAlertAction(title: "Отменить", style: .cancel)
                     let actionDelete = UIAlertAction(title: "Удалить", style: .destructive) { _ in
                         self.viewModel.deleteTracker(with: trackerId)
@@ -272,6 +287,11 @@ extension TrackersViewController: UICollectionViewDelegate {
                 }
             ])
         })
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.click, item: AppMetricsItems.track)
     }
 }
 
@@ -382,8 +402,8 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        let inset = UIEdgeInsets(top: 16.0, left: 16.0, bottom: 16.0, right: 16.0)
         
+        let inset = UIEdgeInsets(top: 16.0, left: 16.0, bottom: 16.0, right: 16.0)
         return inset
     }
     

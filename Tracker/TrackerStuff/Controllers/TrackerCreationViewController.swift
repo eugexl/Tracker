@@ -17,7 +17,7 @@ final class TrackerCreationViewController: UIViewController {
     
     private lazy var colorSelected: Int? = nil {
         didSet {
-           testFormValidity()
+            testFormValidity()
         }
     }
     
@@ -29,7 +29,7 @@ final class TrackerCreationViewController: UIViewController {
     
     private lazy var emojiSelected: Int? = nil {
         didSet {
-           testFormValidity()
+            testFormValidity()
         }
     }
     
@@ -52,7 +52,7 @@ final class TrackerCreationViewController: UIViewController {
     
     private lazy var trackerSchedule: Set<TrackerSchedule> = Set<TrackerSchedule>() {
         didSet {
-           testFormValidity()
+            testFormValidity()
         }
     }
     
@@ -146,7 +146,7 @@ final class TrackerCreationViewController: UIViewController {
     var trackerCategory: String = "" {
         didSet {
             tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
-           testFormValidity()
+            testFormValidity()
         }
     }
     
@@ -163,6 +163,8 @@ final class TrackerCreationViewController: UIViewController {
         textField.delegate = self
         collectionView.delegate = self
         collectionView.dataSource = self
+        
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.open, item: AppMetricsItems.add_track)
     }
     
     init(viewModel: TrackerViewModelProtocol, type: TrackerType, controllerType: ControllerType = .create){
@@ -271,6 +273,7 @@ final class TrackerCreationViewController: UIViewController {
         ])
         
         tableView.separatorInset = UIEdgeInsets(top: 0, left: 16.0, bottom: 0, right: 16.0)
+        tableView.separatorColor = UIColor(named: ColorNames.gray)
         
         buttonCancel.addTarget(self, action: #selector(buttonCancelTapped), for: .touchUpInside)
         buttonCreate.addTarget(self, action: #selector(buttonCreateTapped), for: .touchUpInside)
@@ -280,6 +283,7 @@ final class TrackerCreationViewController: UIViewController {
     private func buttonCancelTapped(){
         
         dismiss(animated: true)
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.close, item: AppMetricsItems.add_track)
     }
     
     @objc
@@ -306,6 +310,7 @@ final class TrackerCreationViewController: UIViewController {
             viewModel.update(tracker: tracker, to: trackerCategory)
         }
         dismiss(animated: true)
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.close, item: AppMetricsItems.add_track)
     }
     
     private func buttonCreateState(isEnabled: Bool){

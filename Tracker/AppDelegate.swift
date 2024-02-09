@@ -7,6 +7,7 @@
 
 import UIKit
 import CoreData
+import YandexMobileMetrica
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -31,6 +32,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.window?.makeKeyAndVisible()
         
         ScheduleTransformer.register()
+        
+        let configuration = YMMYandexMetricaConfiguration.init(apiKey: PrivateKeys.YandexAppMetricaAPIKey)
+        YMMYandexMetrica.activate(with: configuration!)
+        
         return true
     }
     
