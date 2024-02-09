@@ -152,7 +152,13 @@ final class TrackerCell: UICollectionViewCell {
     
     private func updateQuantityLabel(){
         
-        labelQuantity.text = StringFormaters.doneDays_ru(days)
+//        labelQuantity.text = StringFormaters.doneDays_ru(days)
+        
+        
+        let daysString = NSLocalizedString("completedDays", comment: "")
+        let localizedString = String.localizedStringWithFormat(daysString, days)
+        
+        labelQuantity.text = localizedString
     }
     
     private func updateCompleteTrackerButton(){

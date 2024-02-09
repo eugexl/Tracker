@@ -1,0 +1,16 @@
+"trackers.buttonFilters" = "Filters";
+"trackers.labelTitle" = "Trackers";
+"trackers.searchTextField" = "Search";
+"trackers.noTrackersTitle" = "What are we going to track?";
+"trackers.noTrackersFoundTitle" = "Nothing was found";
+"trackers.contextMenuPin" = "Pin";
+"trackers.contextMenuUnpin" = "Unpin";
+"trackers.contextMenuEdit" = "Edit";
+"trackers.contextMenuDelete" = "Delete";
+"trackers.contextMenuConfirmCancel" = "Cancel";
+"trackers.contextMenuConfirmDelete" = "Delete";
+"trackers.contextMenuConfirmText" = "Are you sure you want to delete the tracker?";
+"tabBar.trackers" = "Trackers";
+"tabBar.statistics" = "Statistics";
+
+

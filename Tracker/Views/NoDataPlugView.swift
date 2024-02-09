@@ -84,10 +84,10 @@ final class NoDataPlugView: UIView {
             labelText = "Привычки и события можно\nобъединить по смыслу"
             plugImage.image = UIImage(named: "PlugImage")
         case .noTrackers:
-            labelText = "Что будем отслеживать?"
+            labelText = NSLocalizedString("trackers.noTrackersTitle", comment: "")
             plugImage.image = UIImage(named: "PlugImage")
         case .noTrackersFound:
-            labelText = "Ничего не найдено"
+            labelText = NSLocalizedString("trackers.noTrackersFoundTitle", comment: "")
             plugImage.image = UIImage(named: "PlugImageSearchMode")
         case .statistics:
             labelText = "Анализировать пока нечего"

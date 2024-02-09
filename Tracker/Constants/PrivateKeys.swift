@@ -9,5 +9,6 @@ import Foundation
 
 enum PrivateKeys {
     
+    // Необходимо задать API-ключ приложения
     static let YandexAppMetricaAPIKey = ""
 }

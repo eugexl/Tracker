@@ -381,7 +381,9 @@ final class TrackerCreationViewController: UIViewController {
         colorSelected = colorList.firstIndex(of: tracker.color)
         trackerCategory = category
         trackerSchedule = tracker.schedule
-        labelDoneDays.text = StringFormaters.doneDays_ru(days)
+        let daysString = NSLocalizedString("completedDays", comment: "")
+        let localizedString = String.localizedStringWithFormat(daysString, days)
+        labelDoneDays.text = localizedString
     }
     
     func scheduleMade(with set: Set<TrackerSchedule>){

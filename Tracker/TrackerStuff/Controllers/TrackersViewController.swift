@@ -53,7 +53,8 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
     
     private lazy var buttonFilters: UIButton = {
         let button = UIButton(type: .custom)
-        button.setTitle("Фильтры", for: .normal)
+        let buttonTitle = NSLocalizedString("trackers.buttonFilters", comment: "")
+        button.setTitle(buttonTitle, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .regular)
         button.tintColor = .white
         button.backgroundColor = UIColor(red: 55/255, green: 114/255, blue: 231/255, alpha: 1)
@@ -89,13 +90,13 @@ final class TrackersViewController: UIViewController, TrackersFilterProtocol {
     private lazy var labelTitle = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 34, weight: .bold)
-        label.text = "Трекеры"
+        label.text = NSLocalizedString("trackers.labelTitle", comment: "")
         return label
     }()
     
     private lazy var searchTextField: UISearchTextField = {
         let searchBar = UISearchTextField()
-        searchBar.placeholder = "Поиск"
+        searchBar.placeholder = NSLocalizedString("trackers.searchTextField", comment: "")
         searchBar.backgroundColor = UIColor(named: ColorNames.background)
         return searchBar
     }()
@@ -249,7 +250,7 @@ extension TrackersViewController: UICollectionViewDelegate {
               let pinned = cell.pinned
         else { return nil }
         
-        let pinTitle = pinned ? "Открепить" : "Закрепить"
+        let pinTitle = pinned ? NSLocalizedString("trackers.contextMenuUnpin", comment: "") : NSLocalizedString("trackers.contextMenuPin", comment: "")
         
         return UIContextMenuConfiguration( actionProvider: { actions in
             
@@ -260,7 +261,7 @@ extension TrackersViewController: UICollectionViewDelegate {
                     self.viewModel.toggleTrackerPin(with: trackerId)
                 },
                 
-                UIAction(title: "Редактировать") { [weak self] _ in
+                UIAction(title: NSLocalizedString("trackers.contextMenuEdit", comment: "")) { [weak self] _ in
                     guard let self = self else { return }
                     ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.click, item: AppMetricsItems.edit)
                     
@@ -271,16 +272,18 @@ extension TrackersViewController: UICollectionViewDelegate {
                     self.present(newTrackerVC, animated: true)
                 },
                 
-                UIAction(title: "Удалить", attributes: .destructive) { [weak self] _ in
+                UIAction(title: NSLocalizedString("trackers.contextMenuDelete", comment: ""), attributes: .destructive) { [weak self] _ in
                     guard let self = self else { return }
                     ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.click, item: AppMetricsItems.delete)
                     
-                    let actionCancel = UIAlertAction(title: "Отменить", style: .cancel)
-                    let actionDelete = UIAlertAction(title: "Удалить", style: .destructive) { _ in
+                    let actionCancel = UIAlertAction(title: NSLocalizedString("trackers.contextMenuConfirmCancel", comment: ""),
+                                                     style: .cancel)
+                    let actionDelete = UIAlertAction(title: NSLocalizedString("trackers.contextMenuConfirmDelete", comment: ""),
+                                                     style: .destructive) { _ in
                         self.viewModel.deleteTracker(with: trackerId)
                     }
                     AlertPresenter.shared.presentAlert(title: "",
-                                                       message: "Уверены что хотите удалить трекер?",
+                                                       message: NSLocalizedString("trackers.contextMenuConfirmText", comment: ""),
                                                        actions: [actionCancel, actionDelete],
                                                        target: self,
                                                        preferredStyle: .actionSheet)
