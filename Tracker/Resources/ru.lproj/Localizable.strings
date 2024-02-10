@@ -1,0 +1,14 @@
+"trackers.buttonFilters" = "Фильтры";
+"trackers.labelTitle" = "Трекеры";
+"trackers.searchTextField" = "Поиск";
+"trackers.noTrackersTitle" = "Что будем отслеживать?";
+"trackers.noTrackersFoundTitle" = "Ничего не найдено";
+"trackers.contextMenuPin" = "Закрепить";
+"trackers.contextMenuUnpin" = "Открепить";
+"trackers.contextMenuEdit" = "Редактировать";
+"trackers.contextMenuDelete" = "Удалить";
+"trackers.contextMenuConfirmCancel" = "Отменить";
+"trackers.contextMenuConfirmDelete" = "Удалить";
+"trackers.contextMenuConfirmText" = "Уверены что хотите удалить трекер?";
+"tabBar.trackers" = "Трекеры";
+"tabBar.statistics" = "Статистика";

@@ -9,8 +9,7 @@ import UIKit
 
 final class TrackerNewCategoryViewController: UIViewController {
     
-    weak var delegate: TrackerCreationViewController?
-    weak var viewModel: TrackerViewModelProtocol?
+    private let controllerType: ControllerType
     
     private let buttonDone = {
         let button = UIButton()
@@ -24,7 +23,6 @@ final class TrackerNewCategoryViewController: UIViewController {
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Новая категория"
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         return label
     }()
@@ -40,6 +38,9 @@ final class TrackerNewCategoryViewController: UIViewController {
         return field
     }()
     
+    let previousTitle: String
+    weak var viewModel: TrackerViewModelProtocol?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -47,10 +48,13 @@ final class TrackerNewCategoryViewController: UIViewController {
         setupUI()
     }
     
-    init(viewModel: TrackerViewModelProtocol? = nil) {
-        super.init(nibName: nil, bundle: nil)
+    init(viewModel: TrackerViewModelProtocol? = nil, controllerType: ControllerType = .create, previousTitle: String = "" ) {
         
         self.viewModel = viewModel
+        self.controllerType = controllerType
+        self.previousTitle = previousTitle
+        
+        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -60,6 +64,11 @@ final class TrackerNewCategoryViewController: UIViewController {
     private func setupUI(){
         
         view.backgroundColor = UIColor(named: ColorNames.white)
+        
+        titleLabel.text = controllerType == .create ? "Новая категория" : "Редактирование категории"
+        if controllerType == .edit {
+            textField.text = previousTitle
+        }
         
         [buttonDone, titleLabel, textField].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -82,18 +91,21 @@ final class TrackerNewCategoryViewController: UIViewController {
             buttonDone.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
         ])
         
-        buttonDone.addTarget(self, action: #selector(addNewCategory), for: .touchUpInside)
+        buttonDone.addTarget(self, action: #selector(addOrEditCategory), for: .touchUpInside)
         buttonDoneState(isEnabled: false)
     }
     
     @objc
-    private func addNewCategory(){
+    private func addOrEditCategory(){
         
-        guard let titleText = textField.text, titleText.count > 0 else {
+        guard let titleText = textField.text, !titleText.isEmpty else {
             return
         }
-        
-        viewModel?.createCategory(titledWith: titleText)
+        if controllerType == .create {
+            viewModel?.createCategory(titledWith: titleText)
+        } else {
+            viewModel?.updateCategory(fromOld: previousTitle, toNew: titleText)
+        }
         dismiss(animated: true)
     }
     
@@ -114,10 +126,10 @@ extension TrackerNewCategoryViewController: UITextFieldDelegate {
     
     func textFieldDidChangeSelection(_ textField: UITextField) {
         
-        if let text = textField.text, text.count > 0 {
-           buttonDoneState(isEnabled: true)
+        if let text = textField.text, text.isEmpty {
+            buttonDoneState(isEnabled: false)
         } else {
-           buttonDoneState(isEnabled: false)
+            buttonDoneState(isEnabled: true)
         }
     }
 }

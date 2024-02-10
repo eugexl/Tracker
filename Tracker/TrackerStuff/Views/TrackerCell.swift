@@ -23,15 +23,17 @@ final class TrackerCell: UICollectionViewCell {
         }
     }
     
+    var pinned: Bool?
+    
     var viewModel: TrackerViewModelProtocol?
     
     var trackerId: UUID?
+    var trackerType: TrackerType?
     
     private lazy var buttonCompleteTracker: UIButton = {
         let button = UIButton()
         button.tintColor = .white
         button.layer.cornerRadius = 17.0
-        
         return button
     }()
     
@@ -61,7 +63,7 @@ final class TrackerCell: UICollectionViewCell {
     
     private lazy var viewBottom: UIView = {
         let bottomView = UIView()
-        bottomView.backgroundColor = .white
+        bottomView.backgroundColor = .clear
         return bottomView
     }()
     
@@ -72,10 +74,9 @@ final class TrackerCell: UICollectionViewCell {
         return emojiView
     }()
     
-    private lazy var viewTop: UIView = {
+    lazy var viewTop: UIView = {
         let topView = UIView()
         topView.layer.cornerRadius = 16.0
-        topView.backgroundColor = .orange
         return topView
     }()
     
@@ -151,21 +152,13 @@ final class TrackerCell: UICollectionViewCell {
     
     private func updateQuantityLabel(){
         
-        var daysString = ""
+//        labelQuantity.text = StringFormaters.doneDays_ru(days)
         
-        if (11...19).contains(days) {
-            daysString = " дней"
-        } else {
-            switch days % 10 {
-            case 1:
-                daysString = " день"
-            case 2, 3, 4:
-                daysString = " дня"
-            default:
-                daysString = " дней"
-            }
-        }
-        labelQuantity.text = days.description + daysString
+        
+        let daysString = NSLocalizedString("completedDays", comment: "")
+        let localizedString = String.localizedStringWithFormat(daysString, days)
+        
+        labelQuantity.text = localizedString
     }
     
     private func updateCompleteTrackerButton(){
@@ -178,6 +171,7 @@ final class TrackerCell: UICollectionViewCell {
     func setUpTrackerInfo(with tracker: Tracker){
         
         trackerId = tracker.id
+        trackerType = tracker.schedule.count == 0 ? .irregularEvent : .habit
         labelEmojiIcon.text = tracker.emoji
         textViewTrackerText.text = tracker.name
         [viewTop, buttonCompleteTracker].forEach {

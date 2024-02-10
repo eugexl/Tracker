@@ -9,6 +9,8 @@ import UIKit
 
 final class TrackerCategoryViewController: UIViewController {
     
+    private static var lastUsedCategory: String = ""
+    
     weak var delegate: TrackerCreationViewController?
     weak var viewModel: TrackerViewModelProtocol?
     var rowsInTable: Int = 0
@@ -84,6 +86,7 @@ final class TrackerCategoryViewController: UIViewController {
         ])
         
         tableView.separatorInset = UIEdgeInsets(top: 0, left: 16.0, bottom: 0, right: 16.0)
+        tableView.separatorColor = UIColor(named: ColorNames.gray)
         buttonAdd.addTarget(self, action: #selector(addNewCategory), for: .touchUpInside)
     }
     
@@ -95,7 +98,7 @@ final class TrackerCategoryViewController: UIViewController {
     private func addNewCategory(){
         
         let newCategoryVC = TrackerNewCategoryViewController(viewModel: viewModel)
-       present(newCategoryVC, animated: true)
+        present(newCategoryVC, animated: true)
     }
 }
 
@@ -105,9 +108,42 @@ extension TrackerCategoryViewController: UITableViewDelegate {
         let cell = tableView.cellForRow(at: indexPath) as? TrackerCategoryTableCell
         cell?.accessoryType = .checkmark
         
-        delegate?.trackerCategory = cell?.labelText ?? ""
+        let categoryTitle = cell?.labelText ?? ""
+        
+        TrackerCategoryViewController.lastUsedCategory = categoryTitle
+        
+        delegate?.trackerCategory = categoryTitle
         
         dismiss(animated: true)
+    }
+    
+    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        let categoryTitle = viewModel?.categoryTitleFromTotalList(for: indexPath.row) ?? ""
+        
+        let contextMenu = UIContextMenuConfiguration(actionProvider: { _ in
+            return UIMenu(children: [
+                UIAction(title: "Редактировать", handler: { [weak self] _ in
+                    guard let self = self else { return }
+                    let newCategoryVC = TrackerNewCategoryViewController(viewModel: self.viewModel, controllerType: .edit, previousTitle: categoryTitle)
+                    self.present(newCategoryVC, animated: true)
+                }),
+                UIAction(title: "Удалить", attributes: .destructive, handler: { [weak self] _ in
+                    guard let self = self else { return }
+                    let actionCancel = UIAlertAction(title: "Отменить", style: .cancel)
+                    let actionDelete = UIAlertAction(title: "Удалить", style: .destructive) { _ in
+                        self.viewModel?.deleteCategory(titledWith: categoryTitle)
+                    }
+                    AlertPresenter.shared.presentAlert(title: "",
+                                                       message: "Эта категория точно не нужна?",
+                                                       actions: [actionCancel, actionDelete],
+                                                       target: self,
+                                                       preferredStyle: .actionSheet)
+                })
+            ])
+        })
+        
+        return contextMenu
     }
 }
 
@@ -120,21 +156,16 @@ extension TrackerCategoryViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        let categoriesNumber = viewModel?.numberOfCategories() ?? 0
+        let categoriesNumber = viewModel?.numberOfCategoriesTotal() ?? 0
         
         if categoriesNumber == 0 {
-            
             if let plugView = tableView.backgroundView as? NoDataPlugView {
-                
                 plugView.fadeIn()
             } else {
-                
-                tableView.backgroundView = NoDataPlugView(frame: tableView.bounds, labelText: "Привычки и события можно\nобъединить по смыслу")
+                tableView.backgroundView = NoDataPlugView(frame: tableView.bounds, plugMode: .noCategories)
             }
         } else {
-            
             if let plugView = tableView.backgroundView as? NoDataPlugView {
-                
                 plugView.fadeOut()
             }
         }
@@ -147,19 +178,30 @@ extension TrackerCategoryViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: TrackerCategoryTableCell.reuseIdentifier) as? TrackerCategoryTableCell ?? TrackerCategoryTableCell()
         
-        cell.labelText = viewModel?.categoryTitle(for: indexPath.row)
+        cell.accessoryType = .none
+        
+        cell.labelText = viewModel?.categoryTitleFromTotalList(for: indexPath.row)
+        
+        if let categoryTitle = cell.labelText, categoryTitle == TrackerCategoryViewController.lastUsedCategory {
+            cell.accessoryType = .checkmark
+        }
         
         cell.backgroundColor = UIColor(named: ColorNames.background)
         cell.layer.masksToBounds = true
         cell.layer.cornerRadius = 16.0
         
         if indexPath.row == 0 {
-            cell.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+            if rowsInTable == 1 {
+                cell.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner, .layerMinXMinYCorner, .layerMaxXMinYCorner]
+            }else {
+                cell.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+            }
         } else if indexPath.row == rowsInTable - 1 {
             cell.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         } else {
             cell.layer.maskedCorners = []
         }
+        
         cell.hidesBottomSeparator = indexPath.row == rowsInTable - 1
         
         return cell

@@ -17,7 +17,7 @@ final class TrackerCreationViewController: UIViewController {
     
     private lazy var colorSelected: Int? = nil {
         didSet {
-           testFormValidity()
+            testFormValidity()
         }
     }
     
@@ -29,11 +29,18 @@ final class TrackerCreationViewController: UIViewController {
     
     private lazy var emojiSelected: Int? = nil {
         didSet {
-           testFormValidity()
+            testFormValidity()
         }
     }
     
+    
+    private var labelTrackerNameLengthLimitErrorHidden: NSLayoutConstraint?
+    private var labelTrackerNameLengthLimitErrorDisplayed: NSLayoutConstraint?
+    
     private let newTrackerType: TrackerType
+    
+    private var tableViewTopHigh: NSLayoutConstraint?
+    private var tableViewTopLow: NSLayoutConstraint?
     
     private let viewModel: TrackerViewModelProtocol
     
@@ -41,16 +48,11 @@ final class TrackerCreationViewController: UIViewController {
     
     private lazy var tableViewTrackerParameter = ["Категория", "Расписание"]
     
-    // FIXME: Необходимо будет убрать наименование отладочной категории
-    lazy var trackerCategory: String = "" {
-        didSet {
-            tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
-           testFormValidity()
-        }
-    }
+    private var trackerId: UUID?
+    
     private lazy var trackerSchedule: Set<TrackerSchedule> = Set<TrackerSchedule>() {
         didSet {
-           testFormValidity()
+            testFormValidity()
         }
     }
     
@@ -71,7 +73,6 @@ final class TrackerCreationViewController: UIViewController {
         button.backgroundColor = UIColor(named: ColorNames.gray)
         button.layer.cornerRadius = 16.0
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16.0, weight: .medium)
-        button.setTitle("Создать", for: .normal)
         button.setTitleColor(UIColor(named: ColorNames.white), for: .normal)
         button.isEnabled = false
         return button
@@ -94,16 +95,32 @@ final class TrackerCreationViewController: UIViewController {
         return view
     }()
     
+    private lazy var labelDoneDays: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+        label.text = "5 дней"
+        return label
+    }()
+    
+    private lazy var labelTitle: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var labelTrackerNameLengthLimitError: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 17, weight: .regular)
+        label.textColor = UIColor(named: ColorNames.red)
+        label.text = "Ограничение 38 символов"
+        return label
+    }()
+    
     private lazy var scrollView: UIScrollView = {
         let view = UIScrollView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
-    }()
-    
-    private lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        return label
     }()
     
     private lazy var textField = {
@@ -126,6 +143,15 @@ final class TrackerCreationViewController: UIViewController {
         return tableView
     }()
     
+    var trackerCategory: String = "" {
+        didSet {
+            tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
+            testFormValidity()
+        }
+    }
+    
+    var controllerType: ControllerType
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -137,14 +163,18 @@ final class TrackerCreationViewController: UIViewController {
         textField.delegate = self
         collectionView.delegate = self
         collectionView.dataSource = self
+        
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.open, item: AppMetricsItems.add_track)
     }
     
-    init(viewModel: TrackerViewModelProtocol, type: TrackerType){
+    init(viewModel: TrackerViewModelProtocol, type: TrackerType, controllerType: ControllerType = .create){
         
         self.viewModel = viewModel
         self.newTrackerType = type
+        self.controllerType = controllerType
         
         super.init(nibName: nil, bundle: nil)
+        
     }
     
     required init?(coder: NSCoder) {
@@ -156,24 +186,46 @@ final class TrackerCreationViewController: UIViewController {
         view.backgroundColor = UIColor(named: ColorNames.white)
         
         let tableViewHeight: CGFloat = newTrackerType == .habit ? 150.0 : 75.0
-        titleLabel.text = newTrackerType == .habit ? "Новая привычка" : "Новое нерегулярное событие"
+        switch newTrackerType {
+        case .habit:
+            labelTitle.text = controllerType == .create ? "Новая привычка" : "Редактирование привычки"
+        case .irregularEvent:
+            labelTitle.text = controllerType == .create ? "Новое нерегулярное событие" : "Редактирование события"
+        }
         
+        let buttonTitle = controllerType == .create ? "Создать" : "Сохранить"
+        buttonCreate.setTitle(buttonTitle, for: .normal)
+        
+        view.addSubview(labelTitle)
         view.addSubview(scrollView)
         
         scrollView.addSubview(contentView)
         
-        [textField, titleLabel, tableView, collectionView, buttonCancel, buttonCreate].forEach {
+        [labelDoneDays, textField, labelTrackerNameLengthLimitError, tableView, collectionView, buttonCancel, buttonCreate].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
+        
         let buttonWidth = (view.bounds.width - 50) / 2
         
         let contentViewHeightAnchor = contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
         contentViewHeightAnchor.priority = UILayoutPriority(50)
         
+        let labelDoneDaysHeight: CGFloat = controllerType == .create ? 0 : 60
+        
+        labelTrackerNameLengthLimitErrorHidden = labelTrackerNameLengthLimitError.heightAnchor.constraint(equalToConstant: 0)
+        labelTrackerNameLengthLimitErrorDisplayed = labelTrackerNameLengthLimitError.heightAnchor.constraint(equalToConstant: 22)
+        labelTrackerNameLengthLimitErrorHidden?.isActive = true
+        
+        tableViewTopLow = tableView.topAnchor.constraint(equalTo: labelTrackerNameLengthLimitError.bottomAnchor, constant: 18)
+        tableViewTopHigh = tableView.topAnchor.constraint(equalTo: labelTrackerNameLengthLimitError.bottomAnchor, constant: 30)
+        tableViewTopLow?.isActive = true
         
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            labelTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 28),
+            labelTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            scrollView.topAnchor.constraint(equalTo: labelTitle.bottomAnchor, constant: 10),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -185,16 +237,19 @@ final class TrackerCreationViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentViewHeightAnchor,
             
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 28.0),
-            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            labelDoneDays.heightAnchor.constraint(equalToConstant: labelDoneDaysHeight),
+            labelDoneDays.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            labelDoneDays.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
-            textField.heightAnchor.constraint(equalToConstant: 75.0),
-            textField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 38.0),
-            textField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
-            textField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
+            textField.heightAnchor.constraint(equalToConstant: 75),
+            textField.topAnchor.constraint(equalTo: labelDoneDays.bottomAnchor, constant: 26),
+            textField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            textField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            labelTrackerNameLengthLimitError.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 6),
+            labelTrackerNameLengthLimitError.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
             tableView.heightAnchor.constraint(equalToConstant: tableViewHeight),
-            tableView.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 38.0),
             tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
             tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
             
@@ -218,6 +273,7 @@ final class TrackerCreationViewController: UIViewController {
         ])
         
         tableView.separatorInset = UIEdgeInsets(top: 0, left: 16.0, bottom: 0, right: 16.0)
+        tableView.separatorColor = UIColor(named: ColorNames.gray)
         
         buttonCancel.addTarget(self, action: #selector(buttonCancelTapped), for: .touchUpInside)
         buttonCreate.addTarget(self, action: #selector(buttonCreateTapped), for: .touchUpInside)
@@ -227,6 +283,7 @@ final class TrackerCreationViewController: UIViewController {
     private func buttonCancelTapped(){
         
         dismiss(animated: true)
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.close, item: AppMetricsItems.add_track)
     }
     
     @objc
@@ -239,31 +296,52 @@ final class TrackerCreationViewController: UIViewController {
         let emoji = emojiList[selectedEmojiIndex]
         let colorName = colorList[selectedColorIndex]
         
-        let tracker = Tracker(id: UUID(),
+        let tracker = Tracker(id: trackerId ?? UUID(),
                               name: trackerName,
                               color: colorName,
                               emoji: emoji,
+                              pinned: false,
                               schedule: trackerSchedule)
         
-        viewModel.save(tracker: tracker, to: trackerCategory)
+        switch controllerType {
+        case .create:
+            viewModel.save(tracker: tracker, to: trackerCategory)
+        case .edit:
+            viewModel.update(tracker: tracker, to: trackerCategory)
+        }
         dismiss(animated: true)
+        ReportMetrics.reportMerics(screen: AppMetricsScreens.main, event: AppMetricsEvents.close, item: AppMetricsItems.add_track)
     }
     
-    func buttonCreateState(isEnabled: Bool){
+    private func buttonCreateState(isEnabled: Bool){
         
         buttonCreate.backgroundColor = UIColor(named: isEnabled ? ColorNames.black : ColorNames.gray)
         buttonCreate.isEnabled = isEnabled
     }
     
-    func scheduleMade(with set: Set<TrackerSchedule>){
+    private func labelTrackerNameLengthLimitError(displayed: Bool){
         
-        self.trackerSchedule = set
-        tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .automatic)
+        if displayed {
+            UIView.animate(withDuration: 0.3) {
+                self.labelTrackerNameLengthLimitErrorHidden?.isActive = false
+                self.labelTrackerNameLengthLimitErrorDisplayed?.isActive = true
+                self.tableViewTopLow?.isActive = false
+                self.tableViewTopHigh?.isActive = true
+                self.view.layoutIfNeeded()
+            }
+        } else  {
+            UIView.animate(withDuration: 0.3) {
+                self.labelTrackerNameLengthLimitErrorDisplayed?.isActive = false
+                self.labelTrackerNameLengthLimitErrorHidden?.isActive = true
+                self.tableViewTopHigh?.isActive = false
+                self.tableViewTopLow?.isActive = true
+                self.view.layoutIfNeeded()
+            }
+        }
     }
-  
     
-    func testFormValidity(){
-        guard let trackerName = textField.text, trackerName.count > 0  else {
+    private func testFormValidity(){
+        guard let trackerName = textField.text, (1...38).contains(trackerName.count) else {
             buttonCreateState(isEnabled: false);
             return
         }
@@ -290,6 +368,30 @@ final class TrackerCreationViewController: UIViewController {
         
         buttonCreateState(isEnabled: true);
     }
+    
+    func fillInfoOfTracker(with trackerId: UUID, and category: String, done days: Int){
+        
+        guard let tracker = viewModel.getTracker(with: trackerId) else {
+            fatalError("Не получили информацию о трекере!")
+        }
+        
+        self.trackerId = tracker.id
+        textField.text = tracker.name
+        emojiSelected = emojiList.firstIndex(of: tracker.emoji)
+        colorSelected = colorList.firstIndex(of: tracker.color)
+        trackerCategory = category
+        trackerSchedule = tracker.schedule
+        let daysString = NSLocalizedString("completedDays", comment: "")
+        let localizedString = String.localizedStringWithFormat(daysString, days)
+        labelDoneDays.text = localizedString
+    }
+    
+    func scheduleMade(with set: Set<TrackerSchedule>){
+        
+        self.trackerSchedule = set
+        tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .automatic)
+    }
+    
 }
 
 extension TrackerCreationViewController: UITableViewDelegate {
@@ -345,9 +447,7 @@ extension TrackerCreationViewController: UITableViewDataSource {
         cell.detailTextLabel?.textColor = UIColor(named: ColorNames.gray)
         cell.detailTextLabel?.font = UIFont.systemFont(ofSize: 15.0)
         
-        // TODO: В следующей версии переделать trackerCategory в опционал
-        // if (indexPath.row == 0 && trackerCategory != nil){
-        if (indexPath.row == 0 && trackerCategory.count > 0){
+        if (indexPath.row == 0 && !trackerCategory.isEmpty){
             
             cell.detailTextLabel?.text = trackerCategory
         } else if (indexPath.row == 1 && !trackerSchedule.isEmpty) {
@@ -382,6 +482,15 @@ extension TrackerCreationViewController: UITextFieldDelegate {
     }
     
     func textFieldDidChangeSelection(_ textField: UITextField) {
+        
+        guard let trackerName = textField.text, trackerName.count < 39 else {
+            
+            labelTrackerNameLengthLimitError(displayed: true)
+            buttonCreateState(isEnabled: false);
+            return
+        }
+        
+        labelTrackerNameLengthLimitError(displayed: false)
         testFormValidity()
     }
 }
@@ -446,17 +555,28 @@ extension TrackerCreationViewController: UICollectionViewDataSource {
         
         switch indexPath.section {
         case 0:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCreationEmojiCell.reuseIdentifier,for: indexPath) as? TrackerCreationEmojiCell
-            cell?.emoji = emojiList[indexPath.row]
             
-            return cell ?? UICollectionViewCell()
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCreationEmojiCell.reuseIdentifier,for: indexPath) as? TrackerCreationEmojiCell ?? TrackerCreationEmojiCell()
+            
+            cell.emoji = emojiList[indexPath.row]
+            if indexPath.row == emojiSelected {
+                cell.toggleSelection()
+            }
+            
+            return cell
         default:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCreationColorCell.reuseIdentifier,for: indexPath) as? TrackerCreationColorCell
-            cell?.color = colorList[indexPath.row]
-            return cell ?? UICollectionViewCell()
+            
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCreationColorCell.reuseIdentifier,for: indexPath) as? TrackerCreationColorCell ?? TrackerCreationColorCell()
+            
+            cell.color = colorList[indexPath.row]
+            if indexPath.row == colorSelected {
+                cell.toggleSelection()
+            }
+            return cell
         }
     }
 }
+
 extension TrackerCreationViewController: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {

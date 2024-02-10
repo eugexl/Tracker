@@ -8,6 +8,7 @@
 import Foundation
 
 enum CDErrors: Error {
-    case cannotSaveContext
+    case couldntSaveContext
+    case couldntDeleteTracker
     case noTrackerFound
 }

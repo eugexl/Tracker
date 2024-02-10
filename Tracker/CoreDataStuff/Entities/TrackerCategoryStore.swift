@@ -62,6 +62,13 @@ final class TrackerCategoryStore: NSObject  {
         saveContext()
     }
     
+    func delete(with title: String) {
+        if let categoryItem = resultsController.fetchedObjects?.filter( { $0.title == title }).first {
+            viewContext.delete(categoryItem)
+            saveContext()
+        }
+    }
+    
     func getTrackerCategories() -> [TrackerCategory]? {
         guard let coreDataCategories = resultsController.fetchedObjects else {
             return nil
@@ -74,6 +81,7 @@ final class TrackerCategoryStore: NSObject  {
                 categories.append(trackerCategory)
             }
         }
+        
         return categories
     }
     
@@ -96,12 +104,18 @@ final class TrackerCategoryStore: NSObject  {
         trackers.sort { $0.name < $1.name }
         return TrackerCategory(title: title, trackers: trackers)
     }
+    
+    func updateCategory(fromOld previousTitle: String, toNew title: String){
+        let category = category(with: previousTitle)
+        category.title = title
+        saveContext()
+    }
 }
 
 extension TrackerCategoryStore: NSFetchedResultsControllerDelegate {
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         try? controller.performFetch()
-        viewModel?.updateCategoriesData(with: nil, and: nil)
+        viewModel?.updateCategoriesData(withDate: nil, andName: nil, andFilter: nil)
     }
     
 }
